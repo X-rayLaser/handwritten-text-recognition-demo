@@ -20,3 +20,10 @@
 .App-link {
   color: #09d3ac;
 }
+
+canvas {
+  display:block;
+  border: #000 1px solid;
+  box-sizing: border-box;
+  border-radius: 10px;
+}

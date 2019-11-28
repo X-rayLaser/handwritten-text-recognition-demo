@@ -13,6 +13,8 @@ import Col from 'react-bootstrap/Col';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Container from 'react-bootstrap/Container';
+import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 
 
 function HeroUnit(props) {
@@ -59,7 +61,7 @@ class Painter {
 
   clear() {
       const ctx = this.canvas.getContext('2d');
-      ctx.clearRect(0, 0, 1600, 300);
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.beginPath();
       this.points = [];
   }
@@ -99,17 +101,43 @@ class Canvas extends React.Component {
     super(props);
     this.canvasRef = React.createRef();
     this.painter = null;
+    this.points = [];
+
+    this.eventListeners = [];
+
+    this.resizeCanvas = this.resizeCanvas.bind(this);
   }
 
   resizeCanvas() {
     const canvas = this.canvasRef.current;
-    canvas.width = window.innerWidth;
+
+    if (canvas) {
+      const parentWidth = canvas.parentNode.offsetWidth;
+      canvas.width = parentWidth;
+    }
   }
 
   getPoint(e, canvas) {
       let rect = canvas.getBoundingClientRect();
       let t = Date.now() / 1000;
       return [e.clientX - rect.x, e.clientY - rect.y, t, 0];
+  }
+
+  addEventListener(element, event, handler) {
+    element.addEventListener(event, handler);
+    this.eventListeners.push({
+      element: element,
+      event: event,
+      handler: handler
+    });
+  }
+
+  removeListeners() {
+    this.eventListeners.forEach(obj => {
+      obj.element.removeEventListener(obj.event, obj.handler);
+    });
+
+    this.eventListeners = [];
   }
 
   addListeners(painter) {
@@ -148,9 +176,11 @@ class Canvas extends React.Component {
       self.props.onUpdated(points);
     }
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup', handleMouseUp);
+    this.addEventListener(canvas, 'mousedown', handleMouseDown);
+    this.addEventListener(canvas, 'mousemove', handleMouseMove);
+    this.addEventListener(canvas, 'mouseup', handleMouseUp);
+
+    this.addEventListener(window, 'resize', this.resizeCanvas);
   }
   
   handleClear() {
@@ -158,18 +188,106 @@ class Canvas extends React.Component {
   }
 
   componentDidMount() {
-    this.resizeCanvas();
-    window.addEventListener('resize', (e) => this.resizeCanvas(), false);
     const canvas = this.canvasRef.current;
+    this.resizeCanvas();
     this.painter = new Painter(canvas);
     this.addListeners(this.painter);
+  }
+
+  componentWillUnmount() {
+    this.removeListeners();
   }
 
   render() {
     return (
       <div>
         <canvas ref={this.canvasRef}></canvas>
-        <Button onClick={e => this.handleClear()}>Clear</Button>
+        <Button variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
+        <Button variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.points)}>Recognize</Button>
+      </div>
+    );
+  }
+}
+
+
+function MySwitch(props) {
+  return (
+    <Form>
+      <Form.Check 
+        type="switch"
+        id="custom-switch"
+        label={props.label}
+        checked={props.checked}
+        onChange={(e) => {props.onChange(e)}}
+      />
+    </Form>
+  );
+}
+
+
+class RecognitionWidget extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      on_line: true,
+      complete: true,
+      best_match: "",
+      top_results: []
+    };
+
+    this.handleUpdated = this.handleUpdated.bind(this);
+  }
+
+  handleChange() {
+    this.setState((state, props) => ({
+      on_line: !state.on_line
+    }));
+  }
+
+  handleUpdated(points) {
+    this.setState({complete: false});
+  
+    let bestMatch = "Space - the final frontier";
+    setTimeout(() => {
+      this.setState({
+        complete: true,
+        best_match: bestMatch,
+        top_results: [bestMatch, bestMatch, bestMatch]
+      });
+    }, 1000);
+    return;
+  }
+
+  render() {
+    let dataInput;
+    let switchLabel;
+    let visibleWidget;
+
+    if (this.state.on_line === true) {
+      dataInput = <Canvas onUpdated={this.handleUpdated} />;
+      switchLabel = "On-line recognition";
+    } else {
+      dataInput = <h2 className="text-center">Under development</h2>;
+      switchLabel = "Off-line recognition";
+    }
+
+    if (this.state.complete) {
+      visibleWidget = <RecognitionComponent
+                          best_match={this.state.best_match}
+                          top_results={this.state.top_results} />;
+    } else {
+      visibleWidget = <MyProgressBar />;
+    }
+
+    return (
+      <div>
+        <MySwitch label={switchLabel} checked={this.state.on_line}
+                  onChange={(e) => {this.handleChange()}} />
+
+        {dataInput}
+
+        <SettingsPanel />
+        {visibleWidget}
       </div>
     );
   }
@@ -179,22 +297,18 @@ class Canvas extends React.Component {
 function TranscriptionText(props) {
   return (
     <section>
-      <p style={{fontSize: 36}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere
-          erat a ante.
-      </p>
+      <p style={{fontSize: 48}}>{props.transcription}</p>
     </section>
   );
 }
 
 function TopKList(props) {
-  const listItems = props.transcriptions.map(t => <li>{t}</li>);
+  const listItems = props.transcriptions.map(t => <ListGroup.Item>{t}</ListGroup.Item>);
   return (
     <section className="text-center">
       <h2 className="text-center">Top transcriptions</h2>
       <ListGroup variant="flush">
-        <ListGroup.Item>Cras justo odio</ListGroup.Item>
-        <ListGroup.Item>Dapibus ac facilisis in</ListGroup.Item>
-        <ListGroup.Item >Morbi leo risus</ListGroup.Item>
+        {listItems}
       </ListGroup>
     </section>
   );
@@ -256,48 +370,15 @@ class SettingsPanel extends React.Component {
 
 
 function RecognitionComponent(props) {
-  return (
-    <div>
-      <TranscriptionText transcription=""/>
-      <TopKList transcriptions={["fef"]} />
-    </div>
-  );
-}
-
-
-class RecognitionInterface extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {complete: true};
-  }
-
-  handleUpdated(points) {
-    this.setState({complete: false});
-  
-    setTimeout(() => {
-      this.setState({complete: true});
-    }, 1000);
-    return;
-  }
-
-  render() {  
-    if (this.state.complete) {
-      return (<div>
-        <SettingsPanel />
-        <Canvas onUpdated={points => this.handleUpdated(points)} />
-        <Button>Recognize</Button>
-        <RecognitionComponent />
-      </div>);
-    }
-  
+  if (props.best_match) {
     return (
       <div>
-        <SettingsPanel />
-        <Canvas onUpdated={points => this.handleUpdated(points)} />
-        <Button>Recognize</Button>
-        <MyProgressBar />
+        <TranscriptionText transcription={props.best_match}/>
+        <TopKList transcriptions={props.top_results} />
       </div>
     );
+  } else {
+    return <div>Nothing to show yet</div>;
   }
 }
 
@@ -306,7 +387,7 @@ function App() {
   return (
     <Container>
       <PageHeader />
-      <RecognitionInterface />
+      <RecognitionWidget />
       <PageFooter />
     </Container>
   );

@@ -26,4 +26,5 @@ canvas {
   border: #000 1px solid;
   box-sizing: border-box;
   border-radius: 10px;
+  margin: 20px 0px;
 }

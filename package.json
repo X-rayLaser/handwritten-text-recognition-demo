@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@tensorflow/tfjs": "^1.2.7",
+    "@tensorflow/tfjs-node": "^1.2.7",
     "bootstrap": "^4.4.0",
     "react": "^16.12.0",
     "react-bootstrap": "^1.0.0-beta.16",

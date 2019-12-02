@@ -53,16 +53,6 @@ export default class Canvas extends React.Component {
       const canvas = this.canvasRef.current;
   
       let self = this;
-
-      let lastPoint = {};
-
-      let timerId = 0;
-
-      function onTick() {
-        if (lastPoint.hasOwnProperty("point")) {
-            painter.addPoint(lastPoint.point);
-        }
-      }
   
       function handleMouseDown(e) {
         drawing = true;
@@ -74,8 +64,6 @@ export default class Canvas extends React.Component {
             let newStroke = true;
             painter.addPoint(p, newStroke);
         }
-        
-        timerId = setInterval(onTick, 16);
     
         first = false;
       }
@@ -83,18 +71,13 @@ export default class Canvas extends React.Component {
       function handleMouseMove(e) {
         if (drawing) {
           let p = self.getPoint(e, canvas);
-          lastPoint.point = p;
-          lastPoint.first = first;
-          lastPoint.newStroke = false;
+          painter.addPoint(p);
         }
       }
   
       function handleMouseUp(e) {
         drawing = false;
         this.points = self.painter.getPoints();
-        self.props.onUpdated(this.points);
-        clearInterval(timerId);
-        lastPoint = {};
       }
   
       this.addEventListener(canvas, 'mousedown', handleMouseDown);
@@ -108,21 +91,48 @@ export default class Canvas extends React.Component {
       this.painter.clear();
     }
   
+    drawTestExample() {
+      let self = this;
+      fetch('http://localhost:3000/blstm/test_example.json').then(response => {
+        response.json().then(res => {
+          let points = res.points;
+          let first = true;
+          points.forEach(stroke => {
+            let newStroke = true;
+            stroke.forEach(point => {
+              let [x, y, t] = point;
+              x = x / this.props.ratio * this.props.scale;
+              y = y / this.props.ratio * this.props.scale;
+              let p = [x, y, t, 0];
+              if (first) {
+                self.painter.addFirstPoint(p);
+              } else {
+                self.painter.addPoint(p, newStroke);
+              }
+              newStroke = false;
+              first = false;
+            });
+          });
+        });
+      });
+    }
+
     componentDidMount() {
       const canvas = this.canvasRef.current;
       this.resizeCanvas();
 
       let scale = this.props.scale;
       let R = this.props.ratio;
-      let cellPixelSize = 5 / R * scale;
+      let cellPixelSize = 300 / R * scale;
       this.painter = new Painter(canvas, cellPixelSize);
       this.addListeners(this.painter);
+
+      //this.drawTestExample();
     }
 
     componentDidUpdate(prevProps) {
-      // Typical usage (don't forget to compare props):
       if (this.props.scale !== prevProps.scale) {
-        this.painter.cellPixelSize = 5 / this.props.ratio * this.props.scale;
+        this.painter.cellPixelSize = 300 / this.props.ratio * this.props.scale;
         this.painter.clear();
       }
     }
@@ -136,7 +146,7 @@ export default class Canvas extends React.Component {
         <div>
           <canvas ref={this.canvasRef}></canvas>
           <Button variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
-          <Button variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.points)}>Recognize</Button>
+          <Button variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.painter.getPoints())}>Recognize</Button>
         </div>
       );
     }
@@ -152,7 +162,6 @@ class Painter {
 
     makeGrid() {
       let cellPixelSize = this.cellPixelSize;
-
       let numVertCells = Math.round(this.canvas.height / cellPixelSize);
       let numHorCells = Math.round(this.canvas.width / cellPixelSize);
 
@@ -205,6 +214,6 @@ class Painter {
     }
 
     getPoints() {
-        return this.points.slice(0);
+        return this.points.slice(0, this.points.length);
     }
 }

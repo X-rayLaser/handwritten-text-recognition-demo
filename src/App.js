@@ -76,10 +76,10 @@ class RecognitionWidget extends React.Component {
       complete: true,
       best_match: "",
       top_results: [],
-      scale: 100
+      scale: 0.5
     };
 
-    this.ratio = 10;
+    this.ratio = 7;
 
     this.handleUpdated = this.handleUpdated.bind(this);
 
@@ -92,8 +92,6 @@ class RecognitionWidget extends React.Component {
     fetch('http://localhost:3000/blstm/data_info.json').then(response => {
       console.log("fetch");
       response.json().then(res => {
-        console.log("almost");
-        console.log(res);
         this.dataInfo = res;
       });
     });
@@ -109,28 +107,22 @@ class RecognitionWidget extends React.Component {
     const model = tf.loadLayersModel('http://localhost:3000/blstm/model.json');
     console.log(model);
 
+    this.setState({complete: false});
+
     const preprossor = new Preprocessor(this.dataInfo);
 
     let preprocessed = preprossor.preprocess(points, this.ratio, this.state.scale);
 
     model.then(m => {
       const recognizer = new Recognizer(m, this.dataInfo);
-      let res = recognizer.predict(preprocessed);
-      console.log(res);
-    });
-
-    return;
-    this.setState({complete: false});
-  
-    let bestMatch = "Space - the final frontier";
-    setTimeout(() => {
+      let bestMatch = recognizer.predict(preprocessed);
+      
       this.setState({
         complete: true,
         best_match: bestMatch,
-        top_results: [bestMatch, bestMatch, bestMatch]
+        top_results: [bestMatch]
       });
-    }, 1000);
-    return;
+    });
   }
 
   handleZoomIn() {
@@ -140,9 +132,11 @@ class RecognitionWidget extends React.Component {
   }
 
   handleZoomOut() {
-    this.setState((state, props) => ({
-      scale: state.scale / 1.25
-    }));
+    this.setState((state, props) => {
+      return {
+        scale: state.scale / 1.25
+      }
+    });
   }
 
   render() {

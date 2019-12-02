@@ -118,6 +118,7 @@ class Preprocessor {
             return [x, y, t, eos];
         });
         console.log(recalculated);
+        console.log(this.offset(recalculated));
         return this.normalize(this.offset(recalculated));
     }
 }
@@ -135,6 +136,7 @@ class Recognizer {
             let example = tf.tensor3d([preprocessedPoints], [1, preprocessedPoints.length, 4]);
             let logits = this.model.predict(example);
             let codes = tf.argMax(logits, 2).dataSync();
+            console.log(codes);
             return this.decode(codes);
         } else {
             return "";

@@ -56,20 +56,26 @@ export default class Canvas extends React.Component {
 
       let lastPoint = {};
 
-      function onTick() {
+      let timerId = 0;
 
+      function onTick() {
+        if (lastPoint.hasOwnProperty("point")) {
+            painter.addPoint(lastPoint.point);
+        }
       }
   
       function handleMouseDown(e) {
         drawing = true;
         let p = self.getPoint(e, canvas);
-    
+
         if (first) {
-            painter.addFirstPoint(p, false);
+            painter.addFirstPoint(p);
         } else {
             let newStroke = true;
             painter.addPoint(p, newStroke);
         }
+        
+        timerId = setInterval(onTick, 16);
     
         first = false;
       }
@@ -77,7 +83,9 @@ export default class Canvas extends React.Component {
       function handleMouseMove(e) {
         if (drawing) {
           let p = self.getPoint(e, canvas);
-          painter.addPoint(p);
+          lastPoint.point = p;
+          lastPoint.first = first;
+          lastPoint.newStroke = false;
         }
       }
   
@@ -85,6 +93,8 @@ export default class Canvas extends React.Component {
         drawing = false;
         this.points = self.painter.getPoints();
         self.props.onUpdated(this.points);
+        clearInterval(timerId);
+        lastPoint = {};
       }
   
       this.addEventListener(canvas, 'mousedown', handleMouseDown);
@@ -101,8 +111,20 @@ export default class Canvas extends React.Component {
     componentDidMount() {
       const canvas = this.canvasRef.current;
       this.resizeCanvas();
-      this.painter = new Painter(canvas);
+
+      let scale = this.props.scale;
+      let R = this.props.ratio;
+      let cellPixelSize = 5 / R * scale;
+      this.painter = new Painter(canvas, cellPixelSize);
       this.addListeners(this.painter);
+    }
+
+    componentDidUpdate(prevProps) {
+      // Typical usage (don't forget to compare props):
+      if (this.props.scale !== prevProps.scale) {
+        this.painter.cellPixelSize = 5 / this.props.ratio * this.props.scale;
+        this.painter.clear();
+      }
     }
   
     componentWillUnmount() {
@@ -121,9 +143,33 @@ export default class Canvas extends React.Component {
   }
 
 class Painter {
-    constructor(canvas) {
+    constructor(canvas, cellPixelSize) {
         this.canvas = canvas;
         this.points = [];
+        this.cellPixelSize = cellPixelSize;
+        this.makeGrid();
+    }
+
+    makeGrid() {
+      let cellPixelSize = this.cellPixelSize;
+
+      let numVertCells = Math.round(this.canvas.height / cellPixelSize);
+      let numHorCells = Math.round(this.canvas.width / cellPixelSize);
+
+      const ctx = this.canvas.getContext('2d');
+
+      for (let i = 0; i < numVertCells; i++) {
+        let y = i * cellPixelSize;
+        ctx.moveTo(0, y);
+        ctx.lineTo(this.canvas.width - 1, y);
+        ctx.stroke();
+        for (let j = 0; j < numHorCells; j++) {
+          let x = j * cellPixelSize;
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, this.canvas.height - 1);
+          ctx.stroke();
+        }
+      }
     }
 
     clear() {
@@ -131,6 +177,7 @@ class Painter {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.beginPath();
         this.points = [];
+        this.makeGrid();
     }
 
     addFirstPoint(p) {

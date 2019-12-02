@@ -75,8 +75,11 @@ class RecognitionWidget extends React.Component {
       on_line: true,
       complete: true,
       best_match: "",
-      top_results: []
+      top_results: [],
+      scale: 100
     };
+
+    this.ratio = 10;
 
     this.handleUpdated = this.handleUpdated.bind(this);
 
@@ -108,7 +111,7 @@ class RecognitionWidget extends React.Component {
 
     const preprossor = new Preprocessor(this.dataInfo);
 
-    let preprocessed = preprossor.preprocess(points);
+    let preprocessed = preprossor.preprocess(points, this.ratio, this.state.scale);
 
     model.then(m => {
       const recognizer = new Recognizer(m, this.dataInfo);
@@ -130,13 +133,25 @@ class RecognitionWidget extends React.Component {
     return;
   }
 
+  handleZoomIn() {
+    this.setState((state, props) => ({
+      scale: state.scale * 1.25
+    }));
+  }
+
+  handleZoomOut() {
+    this.setState((state, props) => ({
+      scale: state.scale / 1.25
+    }));
+  }
+
   render() {
     let dataInput;
     let switchLabel;
     let visibleWidget;
 
     if (this.state.on_line === true) {
-      dataInput = <Canvas onUpdated={this.handleUpdated} />;
+      dataInput = <Canvas onUpdated={this.handleUpdated} scale={this.state.scale} ratio={this.ratio} />;
       switchLabel = "On-line recognition";
     } else {
       dataInput = <h2 className="text-center">Under development</h2>;
@@ -160,6 +175,8 @@ class RecognitionWidget extends React.Component {
 
         <SettingsPanel />
         {visibleWidget}
+        <Button onClick={e => this.handleZoomIn()}>Zoom in</Button>
+        <Button onClick={e => this.handleZoomOut()}>Zoom out</Button>
       </div>
     );
   }

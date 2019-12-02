@@ -110,15 +110,15 @@ class Preprocessor {
         return points.map(p => this.normalizePoint(p));
       }
     
-    preprocess(points) {
-        let pointsPerUnit = 0.0250;
+    preprocess(points, ratio, scale) {
         let recalculated = points.map(p => {
-            let [x, y, t, eos] = p;
-            x /= pointsPerUnit;
-            y /= pointsPerUnit;
+            let [X, Y, t, eos] = p;
+            let x = X * ratio / scale;
+            let y = Y * ratio / scale;
             return [x, y, t, eos];
         });
-        return this.normalize(this.offset(this.subSample(recalculated)));
+        console.log(recalculated);
+        return this.normalize(this.offset(recalculated));
     }
 }
 

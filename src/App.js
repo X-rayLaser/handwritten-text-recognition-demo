@@ -1,6 +1,6 @@
 import React from 'react';
-import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 import Button from 'react-bootstrap/Button';
 import Jumbotron from 'react-bootstrap/Jumbotron';
 import Navbar from 'react-bootstrap/Navbar';
@@ -92,15 +92,16 @@ class RecognitionWidget extends React.Component {
 
     // code to get json file with char table, mu and std parameters
     // use them to preprocess points and decode prediction
-    fetch('http://localhost:3000/blstm/data_info.json').then(response => {
+    fetch('http://localhost:8080/blstm/data_info.json').then(response => {
       console.log("fetch");
       response.json().then(res => {
+        console.log(res)
         this.dataInfo = res;
       });
     });
 
     //fetch words index file
-    fetch('http://localhost:3000/words.txt').then(response => {
+    fetch('http://localhost:8080/words.txt').then(response => {
       response.text().then(text => {
         this.wordsIndex = text.split('\n');
       });
@@ -114,7 +115,7 @@ class RecognitionWidget extends React.Component {
   }
 
   handleUpdated(points) {
-    const model = tf.loadLayersModel('http://localhost:3000/blstm/model.json');
+    const model = tf.loadLayersModel('http://localhost:8080/blstm/model.json');
 
     this.setState({complete: false});
 

@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-
+import Module from './token_passing';
 
 class Preprocessor {
     constructor(dataInfo) {
@@ -184,6 +184,7 @@ class BestPathDecoder {
 
 class TokenPassingDecoder {
     constructor(dictPath, bigramPath, wordMapping) {
+        console.log(Module);
         this.token_passing = Module.cwrap("token_passing_js", "string",
             ["string", "string", "number", "number", "array"]
         );

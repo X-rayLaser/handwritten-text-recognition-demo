@@ -124,25 +124,10 @@ class Preprocessor {
 }
 
 
-class Recognizer {
-    constructor(model, dataInfo) {
-        this.model = model;
+class BestPathDecoder {
+    constructor(dataInfo) {
         this.dataInfo = dataInfo;
     }
-
-    predict(preprocessedPoints) {
-        console.log(preprocessedPoints);
-        if (preprocessedPoints.length > 0) {
-            let example = tf.tensor3d([preprocessedPoints], [1, preprocessedPoints.length, 4]);
-            let logits = this.model.predict(example);
-            let codes = tf.argMax(logits, 2).dataSync();
-            console.log(codes);
-            return this.decode(codes);
-        } else {
-            return "";
-        }
-    }
-
     removeRepeatitions(codes) {
         var prev = -1;
         var res = [];
@@ -193,6 +178,72 @@ class Recognizer {
 
     decode(logits) {
         return this.classesToString(this.removeBlanks(this.removeRepeatitions(logits)));
+    }
+}
+
+
+class TokenPassingDecoder {
+    constructor(dictPath, bigramPath, wordMapping) {
+        this.token_passing = Module.cwrap("token_passing_js", "string",
+            ["string", "string", "number", "number", "array"]
+        );
+
+        this.dictPath = dictPath;
+        this.bigramPath = bigramPath;
+        this.wordMapping = wordMapping;
+    }
+
+
+    runTokenPassing(logits) {
+        const steps = logits.length;
+        const numClasses = logits[0].length;
+
+        let flatenLogits = this.logits.flatten();
+  
+        let arr = new Uint8Array(new Float64Array(flatenLogits).buffer);
+        
+        return this.token_passing(this.dictPath, this.bigramPath, steps, numClasses, arr);
+    }
+
+    mapToWords(indices) {
+        let res = "";
+        indices.trim().forEach(indx => res += this.wordMapping[parseInt(indx)] + " ");
+        return res.trim();
+    }
+
+    decode(logits) {
+        if (logits.length <= 0) {
+            return "";
+        }
+        
+        let indexString = this.runTokenPassing(logits);
+
+        return this.mapToWords(indexString);
+    }
+}
+
+
+class Recognizer {
+    constructor(model, dataInfo, wordsIndex) {
+        const dictPath = "../../dictionary/dictionary.txt";
+        const bigramsPath = "../../dictionary/dictionary.txt";
+        this.model = model;
+
+        //this.decoder = new BestPathDecoder(dataInfo);
+        this.decoder = new TokenPassingDecoder(dictPath, bigramsPath, wordsIndex);
+    }
+
+    predict(preprocessedPoints) {
+        console.log(preprocessedPoints);
+        if (preprocessedPoints.length > 0) {
+            let example = tf.tensor3d([preprocessedPoints], [1, preprocessedPoints.length, 4]);
+            let logits = this.model.predict(example);
+            let codes = tf.argMax(logits, 2).dataSync();
+            console.log(codes);
+            return this.decoder.decode(codes);
+        } else {
+            return "";
+        }
     }
 }
 

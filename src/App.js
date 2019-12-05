@@ -17,10 +17,11 @@ import * as tf from '@tensorflow/tfjs';
 import Canvas from './canvas';
 import { Recognizer, Preprocessor } from './recognition';
 
+
 function HeroUnit(props) {
   return (
     <Jumbotron>
-      <h1>Hello, world!</h1>
+      <h1>Hello, world</h1>
       <p>
         This is a simple hero unit, a simple jumbotron-style component for calling
         extra attention to featured content or information.
@@ -87,12 +88,21 @@ class RecognitionWidget extends React.Component {
       char_table: {}
     };
 
+    this.wordsIndex = [];
+
     // code to get json file with char table, mu and std parameters
     // use them to preprocess points and decode prediction
     fetch('http://localhost:3000/blstm/data_info.json').then(response => {
       console.log("fetch");
       response.json().then(res => {
         this.dataInfo = res;
+      });
+    });
+
+    //fetch words index file
+    fetch('http://localhost:3000/words.txt').then(response => {
+      response.text().then(text => {
+        this.wordsIndex = text.split('\n');
       });
     });
   }
@@ -105,7 +115,6 @@ class RecognitionWidget extends React.Component {
 
   handleUpdated(points) {
     const model = tf.loadLayersModel('http://localhost:3000/blstm/model.json');
-    console.log(model);
 
     this.setState({complete: false});
 
@@ -114,7 +123,7 @@ class RecognitionWidget extends React.Component {
     let preprocessed = preprossor.preprocess(points, this.ratio, this.state.scale);
 
     model.then(m => {
-      const recognizer = new Recognizer(m, this.dataInfo);
+      const recognizer = new Recognizer(m, this.dataInfo, this.wordsIndex);
       let bestMatch = recognizer.predict(preprocessed);
       
       this.setState({

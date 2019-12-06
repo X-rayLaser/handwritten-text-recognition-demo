@@ -11,12 +11,6 @@ module.exports = {
   mode: 'development',
 
   module: {
-    defaultRules: [
-      {
-        type: "javascript/auto",
-        resolve: {}
-      }
-    ],
     rules: [
       {
         test: /\.jsx?$/,
@@ -31,21 +25,6 @@ module.exports = {
         }, {
           loader: 'css-loader'
         }]
-      }, {
-        test: /token_passing\.js$/,
-        loader: "exports-loader"
-      }, {
-        test: /token_passing\.wasm$/,
-        loader: "file-loader",
-        options: {
-          publicPath: "public/"
-        }
-      }, {
-        test: /token_passing\.data$/,
-        loader: "file-loader",
-        options: {
-          publicPath: "public/"
-        }
       }
     ]
   }

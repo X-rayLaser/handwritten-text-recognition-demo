@@ -93,7 +93,7 @@ export default class Canvas extends React.Component {
   
     drawTestExample() {
       let self = this;
-      fetch('http://localhost:3000/blstm/test_example.json').then(response => {
+      fetch('http://localhost:8080/blstm/test_example.json').then(response => {
         response.json().then(res => {
           let points = res.points;
           let first = true;

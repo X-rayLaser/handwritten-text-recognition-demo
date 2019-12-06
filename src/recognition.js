@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import Module from './token_passing';
+
 
 class Preprocessor {
     constructor(dataInfo) {
@@ -117,14 +117,12 @@ class Preprocessor {
             let y = Y * ratio / scale;
             return [x, y, t, eos];
         });
-        console.log(recalculated);
-        console.log(this.offset(recalculated));
         return this.normalize(this.offset(recalculated));
     }
 }
 
 
-class BestPathDecoder {
+export class BestPathDecoder {
     constructor(dataInfo) {
         this.dataInfo = dataInfo;
     }
@@ -177,29 +175,36 @@ class BestPathDecoder {
     }
 
     decode(logits) {
-        return this.classesToString(this.removeBlanks(this.removeRepeatitions(logits)));
+        let codes = tf.argMax(logits, 2).dataSync();
+        return this.classesToString(this.removeBlanks(this.removeRepeatitions(codes)));
     }
 }
 
 
-class TokenPassingDecoder {
+export class TokenPassingDecoder {
     constructor(dictPath, bigramPath, wordMapping) {
-        console.log(Module);
-        this.token_passing = Module.cwrap("token_passing_js", "string",
-            ["string", "string", "number", "number", "array"]
-        );
+        this.token_passing = function() {};
+        MyCode().then(module => {
+            console.log("YES");
+            console.log(module);
+            this.token_passing = module.cwrap("token_passing_js", "string",
+                ["string", "string", "number", "number", "array"]
+            );
+        });
 
         this.dictPath = dictPath;
         this.bigramPath = bigramPath;
         this.wordMapping = wordMapping;
     }
 
-
     runTokenPassing(logits) {
-        const steps = logits.length;
-        const numClasses = logits[0].length;
+        let [samples, steps, numClasses] = logits.shape;
 
-        let flatenLogits = this.logits.flatten();
+        if (steps === 0) {
+            throw "Nothing to do";
+        }
+
+        let flatenLogits = logits.flatten().dataSync();
   
         let arr = new Uint8Array(new Float64Array(flatenLogits).buffer);
         
@@ -208,40 +213,36 @@ class TokenPassingDecoder {
 
     mapToWords(indices) {
         let res = "";
-        indices.trim().forEach(indx => res += this.wordMapping[parseInt(indx)] + " ");
+
+        indices.trim().split(' ').forEach(indx => {
+            res += this.wordMapping[parseInt(indx)] + " "}
+        );
+
         return res.trim();
     }
 
     decode(logits) {
-        if (logits.length <= 0) {
+        try {
+            let indexString = this.runTokenPassing(logits);
+            return this.mapToWords(indexString);
+        } catch (e) {
             return "";
         }
-        
-        let indexString = this.runTokenPassing(logits);
-
-        return this.mapToWords(indexString);
     }
 }
 
 
 class Recognizer {
-    constructor(model, dataInfo, wordsIndex) {
-        const dictPath = "../../dictionary/dictionary.txt";
-        const bigramsPath = "../../dictionary/dictionary.txt";
+    constructor(model, decoder) {
         this.model = model;
-
-        //this.decoder = new BestPathDecoder(dataInfo);
-        this.decoder = new TokenPassingDecoder(dictPath, bigramsPath, wordsIndex);
+        this.decoder = decoder;
     }
 
     predict(preprocessedPoints) {
-        console.log(preprocessedPoints);
         if (preprocessedPoints.length > 0) {
             let example = tf.tensor3d([preprocessedPoints], [1, preprocessedPoints.length, 4]);
             let logits = this.model.predict(example);
-            let codes = tf.argMax(logits, 2).dataSync();
-            console.log(codes);
-            return this.decoder.decode(codes);
+            return this.decoder.decode(logits);
         } else {
             return "";
         }

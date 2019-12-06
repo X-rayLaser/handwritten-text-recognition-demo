@@ -15,7 +15,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Container from 'react-bootstrap/Container';
 import * as tf from '@tensorflow/tfjs';
 import Canvas from './canvas';
-import { Recognizer, Preprocessor } from './recognition';
+import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder } from './recognition';
 
 
 function HeroUnit(props) {
@@ -90,12 +90,13 @@ class RecognitionWidget extends React.Component {
 
     this.wordsIndex = [];
 
+    this.decoder = {};
+
     // code to get json file with char table, mu and std parameters
     // use them to preprocess points and decode prediction
     fetch('http://localhost:8080/blstm/data_info.json').then(response => {
       console.log("fetch");
       response.json().then(res => {
-        console.log(res)
         this.dataInfo = res;
       });
     });
@@ -104,6 +105,12 @@ class RecognitionWidget extends React.Component {
     fetch('http://localhost:8080/words.txt').then(response => {
       response.text().then(text => {
         this.wordsIndex = text.split('\n');
+
+        const dictPath = "dictionary/dictionary.txt";
+        const bigramsPath = "dictionary/bigrams.txt";
+
+        this.decoder = new TokenPassingDecoder(dictPath, bigramsPath, this.wordsIndex);
+        //this.decoder = new BestPathDecoder(this.dataInfo);
       });
     });
   }
@@ -124,7 +131,7 @@ class RecognitionWidget extends React.Component {
     let preprocessed = preprossor.preprocess(points, this.ratio, this.state.scale);
 
     model.then(m => {
-      const recognizer = new Recognizer(m, this.dataInfo, this.wordsIndex);
+      const recognizer = new Recognizer(m, this.decoder);
       let bestMatch = recognizer.predict(preprocessed);
       
       this.setState({

@@ -56,6 +56,7 @@ export default class RecognitionWidget extends React.Component {
       };
   
       this.ratio = 7;
+      this.decodingAlgorithm = 'Token passing';
   
       this.handleUpdated = this.handleUpdated.bind(this);
     }
@@ -73,7 +74,8 @@ export default class RecognitionWidget extends React.Component {
           data: {
             ratio: this.ratio,
             scale: this.state.scale,
-            points: points
+            points: points,
+            decodingAlgorithm: this.decodingAlgorithm
           }
       }); 
     }
@@ -124,7 +126,7 @@ export default class RecognitionWidget extends React.Component {
   
           {dataInput}
   
-          <SettingsPanel />
+          <SettingsPanel onDecoderChange={algoName => {this.decodingAlgorithm = algoName;}} />
           {visibleWidget}
           <Button onClick={e => this.handleZoomIn()}>Zoom in</Button>
           <Button onClick={e => this.handleZoomOut()}>Zoom out</Button>

@@ -8,6 +8,20 @@ import Button from 'react-bootstrap/Button';
 
 
 export default class SettingsPanel extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        decoder: 'Token passing'
+      };
+
+      this.handleAlgorithmChange = this.handleAlgorithmChange.bind(this);
+    }
+
+    handleAlgorithmChange(e) {
+      let decoderName = e.target.value;
+      this.setState({decoder: decoderName});
+      this.props.onDecoderChange(decoderName);
+    }
     render() {
       return (
         <Accordion>
@@ -23,7 +37,7 @@ export default class SettingsPanel extends React.Component {
                   <Form.Group as={Row} controlId="decoding_select">
                     <Form.Label column sm={4}>Decoding algorithm</Form.Label>
                     <Col sm={8}>
-                      <Form.Control as="select">
+                      <Form.Control as="select" value={this.state.decoder} onChange={this.handleAlgorithmChange}>
                         <option>Best path</option>
                         <option>Token passing</option>
                       </Form.Control>

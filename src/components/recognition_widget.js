@@ -1,12 +1,11 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import * as tf from '@tensorflow/tfjs';
 import Canvas from './canvas';
-import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder } from '../recognition';
 import TranscriptionPanel from './transcription_panel';
 import SettingsPanel from './settings_panel';
 import MyProgressBar from './progress_bar';
+import Worker from '../workers/worker';
 
 
 function MySwitch(props) {
@@ -23,51 +22,42 @@ function MySwitch(props) {
     );
   }
 
+let worker = new Worker();
+
 
 export default class RecognitionWidget extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
+        ready: false,
         on_line: true,
         complete: true,
         best_match: "",
         top_results: [],
         scale: 0.5
       };
+
+      worker.onmessage = e => {
+        let {message, data} = e.data;
+        if (message === 'init') {
+          this.setState({ready: true});
+        } else if (message === 'resultReady') {
+          let bestMatch = data;
+          this.setState({
+              complete: true,
+              best_match: bestMatch,
+              top_results: [bestMatch]
+          });
+        }
+      };
+
+      worker.onerror = e => {
+        //handle errors here
+      };
   
       this.ratio = 7;
   
       this.handleUpdated = this.handleUpdated.bind(this);
-  
-      this.dataInfo = {
-        char_table: {}
-      };
-  
-      this.wordsIndex = [];
-  
-      this.decoder = {};
-  
-      // code to get json file with char table, mu and std parameters
-      // use them to preprocess points and decode prediction
-      fetch('http://localhost:8080/blstm/data_info.json').then(response => {
-        console.log("fetch");
-        response.json().then(res => {
-          this.dataInfo = res;
-        });
-      });
-  
-      //fetch words index file
-      fetch('http://localhost:8080/words.txt').then(response => {
-        response.text().then(text => {
-          this.wordsIndex = text.split('\n');
-  
-          const dictPath = "dictionary/dictionary.txt";
-          const bigramsPath = "dictionary/bigrams.txt";
-  
-          this.decoder = new TokenPassingDecoder(dictPath, bigramsPath, this.wordsIndex);
-          //this.decoder = new BestPathDecoder(this.dataInfo);
-        });
-      });
     }
   
     handleChange() {
@@ -77,24 +67,15 @@ export default class RecognitionWidget extends React.Component {
     }
   
     handleUpdated(points) {
-      const model = tf.loadLayersModel('http://localhost:8080/blstm/model.json');
-  
       this.setState({complete: false});
-  
-      const preprossor = new Preprocessor(this.dataInfo);
-  
-      let preprocessed = preprossor.preprocess(points, this.ratio, this.state.scale);
-  
-      model.then(m => {
-        const recognizer = new Recognizer(m, this.decoder);
-        let bestMatch = recognizer.predict(preprocessed);
-        
-        this.setState({
-          complete: true,
-          best_match: bestMatch,
-          top_results: [bestMatch]
-        });
-      });
+      worker.postMessage({
+          message: 'recognize',
+          data: {
+            ratio: this.ratio,
+            scale: this.state.scale,
+            points: points
+          }
+      }); 
     }
   
     handleZoomIn() {
@@ -115,6 +96,10 @@ export default class RecognitionWidget extends React.Component {
       let dataInput;
       let switchLabel;
       let visibleWidget;
+
+      if (!this.state.ready) {
+          return <div>Wait...</div>
+      }
   
       if (this.state.on_line === true) {
         dataInput = <Canvas onUpdated={this.handleUpdated} scale={this.state.scale} ratio={this.ratio} />;

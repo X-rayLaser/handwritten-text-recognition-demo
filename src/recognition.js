@@ -185,8 +185,6 @@ export class TokenPassingDecoder {
     constructor(dictPath, bigramPath, wordMapping) {
         this.token_passing = function() {};
         MyCode().then(module => {
-            console.log("YES");
-            console.log(module);
             this.token_passing = module.cwrap("token_passing_js", "string",
                 ["string", "string", "number", "number", "array"]
             );
@@ -205,7 +203,7 @@ export class TokenPassingDecoder {
         }
 
         let flatenLogits = logits.flatten().dataSync();
-  
+
         let arr = new Uint8Array(new Float64Array(flatenLogits).buffer);
         
         return this.token_passing(this.dictPath, this.bigramPath, steps, numClasses, arr);

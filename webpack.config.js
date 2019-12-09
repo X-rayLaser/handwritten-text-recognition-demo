@@ -25,6 +25,10 @@ module.exports = {
         }, {
           loader: 'css-loader'
         }]
+      },
+      {
+        test: /workers.*\.js$/,
+        use: { loader: 'worker-loader' }
       }
     ]
   }

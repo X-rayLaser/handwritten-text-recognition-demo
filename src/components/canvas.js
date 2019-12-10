@@ -157,7 +157,23 @@ class Painter {
         this.canvas = canvas;
         this.points = [];
         this.cellPixelSize = cellPixelSize;
+
+        const ctx = this.canvas.getContext('2d');
+        this.defaultLineWidth = ctx.lineWidth;
+        this.defaultStrokeStyle = ctx.strokeStyle;
+
         this.makeGrid();
+        ctx.beginPath();
+    }
+
+    setGrayLineStyle(ctx) {
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#aaa";
+    }
+
+    restoreOriginalLineStyle(ctx) {
+      ctx.lineWidth = this.defaultLineWidth;
+      ctx.strokeStyle = this.defaultStrokeStyle;
     }
 
     makeGrid() {
@@ -166,6 +182,8 @@ class Painter {
       let numHorCells = Math.round(this.canvas.width / cellPixelSize);
 
       const ctx = this.canvas.getContext('2d');
+      this.setGrayLineStyle(ctx);
+      ctx.beginPath();
 
       for (let i = 0; i < numVertCells; i++) {
         let y = i * cellPixelSize;
@@ -179,14 +197,18 @@ class Painter {
           ctx.stroke();
         }
       }
+
+      ctx.closePath();
+
+      this.restoreOriginalLineStyle(ctx);
     }
 
     clear() {
         const ctx = this.canvas.getContext('2d');
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.beginPath();
         this.points = [];
         this.makeGrid();
+        ctx.beginPath();
     }
 
     addFirstPoint(p) {

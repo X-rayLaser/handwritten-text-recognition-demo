@@ -64,7 +64,7 @@ onmessage = function(e) {
 
             let recognizer = new Recognizer(model, currentDecoder);
             let res = recognizer.predict(preprocessed);
-            //sometimes predict returns undefined in the list of strings
+            //sometimes predict returns undefined in the resulting string
             sendPostMessage('resultReady', res);
         });
     } else if (message === 'changeDecoder') {

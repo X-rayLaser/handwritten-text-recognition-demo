@@ -182,7 +182,7 @@ export class BestPathDecoder {
 
 
 export class TokenPassingDecoder {
-    constructor(dictPath, bigramPath, wordMapping) {
+    constructor(dictParams) {
         this.token_passing = function() {};
         MyCode().then(module => {
             this.token_passing = module.cwrap("token_passing_js", "string",
@@ -190,9 +190,13 @@ export class TokenPassingDecoder {
             );
         });
 
+        this.setDictionary(dictParams);
+    }
+
+    setDictionary({dictPath, bigramPath, wordsIndex}) {
         this.dictPath = dictPath;
         this.bigramPath = bigramPath;
-        this.wordMapping = wordMapping;
+        this.wordsIndex = wordsIndex;
     }
 
     runTokenPassing(logits) {
@@ -213,7 +217,7 @@ export class TokenPassingDecoder {
         let res = "";
 
         indices.trim().split(' ').forEach(indx => {
-            res += this.wordMapping[parseInt(indx)] + " "}
+            res += this.wordsIndex[parseInt(indx)] + " "}
         );
 
         return res.trim();

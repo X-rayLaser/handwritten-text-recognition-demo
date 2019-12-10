@@ -6,12 +6,14 @@ export class FileLoader {
         this.onLoad = onLoad;
         this.dataInfo = null;
         this.model = null;
-        this.wordsIndex = null;
+        this.wordsIndices = {};
+        this.numIndexFiles = 4;
+        this.loadedIndices = 0;
     }
 
     fetchedAll() {
         return this.dataInfo !== null && this.model !== null && 
-                    this.wordsIndex !== null;
+                    this.loadedIndices >= this.numIndexFiles;
     }
 
     notifyWhenComplete() {
@@ -19,7 +21,7 @@ export class FileLoader {
             this.onLoad({
                 dataInfo: this.dataInfo,
                 model: this.model,
-                wordsIndex: this.wordsIndex
+                indices: this.wordsIndices
             });
         }
     }
@@ -33,10 +35,13 @@ export class FileLoader {
         });
     }
 
-    fetchWordIndex() {
-        fetch('http://localhost:8080/words.txt').then(response => {
+    fetchWordIndex(location, fileName) {
+        let uri = `http://localhost:8080/word_indices/${location}/${fileName}`;
+        fetch(uri).then(response => {
             response.text().then(text => {
-                this.wordsIndex = text.split('\n');
+                let wordIndex = text.split('\n');
+                this.wordsIndices[location] = wordIndex;
+                this.loadedIndices += 1;
                 this.notifyWhenComplete();
             });
         });
@@ -52,6 +57,10 @@ export class FileLoader {
     fetch() {
         this.fetchDataInfo();
         this.fetchModel();
-        this.fetchWordIndex();
+        this.fetchWordIndex('1000', 'words.txt');
+        this.fetchWordIndex('2000', 'words.txt');
+        this.fetchWordIndex('3000', 'words.txt');
+        this.fetchWordIndex('4000', 'words.txt');
+        this.fetchWordIndex('5000', 'words.txt');
     }
 }

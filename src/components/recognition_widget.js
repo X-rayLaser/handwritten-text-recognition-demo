@@ -57,14 +57,44 @@ export default class RecognitionWidget extends React.Component {
   
       this.ratio = 7;
       this.decodingAlgorithm = 'Token passing';
+      this.dictSize = 1000;
   
       this.handleUpdated = this.handleUpdated.bind(this);
+      this.handleDictSizeChange = this.handleDictSizeChange.bind(this);
+      this.handleDecoderChange = this.handleDecoderChange.bind(this);
     }
   
     handleChange() {
       this.setState((state, props) => ({
         on_line: !state.on_line
       }));
+    }
+
+    handleDictSizeChange(dictSize) {
+      this.dictSize = dictSize;
+      worker.postMessage({
+          message: 'changeDecoder',
+          data: {
+            decodingAlgorithm: 'Token passing',
+            algorithmParams: { dictSize: this.dictSize }
+          }
+      });
+    }
+
+    handleDecoderChange(decodingAlgorithm) {
+      let params;
+      if (decodingAlgorithm === 'Token passing') {
+        params = { dictSize: this.dictSize };
+      } else {
+        params = {};
+      }
+      worker.postMessage({
+          message: 'changeDecoder',
+          data: {
+            decodingAlgorithm: decodingAlgorithm,
+            algorithmParams: params
+          }
+      });
     }
   
     handleUpdated(points) {
@@ -74,8 +104,7 @@ export default class RecognitionWidget extends React.Component {
           data: {
             ratio: this.ratio,
             scale: this.state.scale,
-            points: points,
-            decodingAlgorithm: this.decodingAlgorithm
+            points: points
           }
       }); 
     }
@@ -126,7 +155,8 @@ export default class RecognitionWidget extends React.Component {
   
           {dataInput}
   
-          <SettingsPanel onDecoderChange={algoName => {this.decodingAlgorithm = algoName;}} />
+          <SettingsPanel onDecoderChange={this.handleDecoderChange}
+                         onDictSizeChange={this.handleDictSizeChange} />
           {visibleWidget}
           <Button onClick={e => this.handleZoomIn()}>Zoom in</Button>
           <Button onClick={e => this.handleZoomOut()}>Zoom out</Button>

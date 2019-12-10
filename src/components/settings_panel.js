@@ -11,16 +11,24 @@ export default class SettingsPanel extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-        decoder: 'Token passing'
+        decoder: 'Token passing',
+        dictSize: 1000
       };
 
       this.handleAlgorithmChange = this.handleAlgorithmChange.bind(this);
+      this.handleDictSizeChange = this.handleDictSizeChange.bind(this);
     }
 
     handleAlgorithmChange(e) {
       let decoderName = e.target.value;
       this.setState({decoder: decoderName});
       this.props.onDecoderChange(decoderName);
+    }
+
+    handleDictSizeChange(e) {
+      let size = parseInt(e.target.value);
+      this.setState({dictSize: size});
+      this.props.onDictSizeChange(size);
     }
     render() {
       return (
@@ -44,18 +52,14 @@ export default class SettingsPanel extends React.Component {
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} controlId="dictionary_select">
-                    <Form.Label column sm={4}>Dictionary</Form.Label>
-                    <Col sm={8}>
-                      <Form.Control as="select">
-                        <option>General</option>
-                        <option>Science</option>
-                      </Form.Control>
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} controlId="formBasicEmail">
                     <Form.Label column sm={4}>Dictionary size</Form.Label>
                     <Col sm={8}>
-                      <Form.Control type="range" min="100" max="10000" value="1000" step="100" />
+                      <Form.Control as="select" value={this.state.dictSize} onChange={this.handleDictSizeChange}>
+                        <option>1000</option>
+                        <option>2000</option>
+                        <option>3000</option>
+                        <option>4000</option>
+                      </Form.Control>
                     </Col>
                   </Form.Group>
                 </Form>

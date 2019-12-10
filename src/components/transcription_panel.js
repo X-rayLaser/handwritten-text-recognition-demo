@@ -1,15 +1,17 @@
 import React from 'react';
 import ListGroup from 'react-bootstrap/ListGroup';
-
-
+import Jumbotron from 'react-bootstrap/Jumbotron';
+import Container from 'react-bootstrap/Container';
 function TranscriptionText(props) {
     return (
-      <section>
-        <p style={{fontSize: 48}}>{props.transcription}</p>
-      </section>
+      <Jumbotron>
+        <Container>
+          <p style={{fontSize: 76}} className="text-center">{props.transcription}</p>
+        </Container>
+      </Jumbotron> 
     );
 }
-  
+
 function TopKList(props) {
     const listItems = props.transcriptions.map(t => <ListGroup.Item>{t}</ListGroup.Item>);
     return (
@@ -28,10 +30,9 @@ export default function TranscriptionPanel(props) {
       return (
         <div>
           <TranscriptionText transcription={props.best_match}/>
-          <TopKList transcriptions={props.top_results} />
         </div>
       );
     } else {
-      return <div>Nothing to show yet</div>;
+      return <div></div>;
     }
 }

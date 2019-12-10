@@ -124,20 +124,10 @@ export default class RecognitionWidget extends React.Component {
     }
   
     render() {
-      let dataInput;
-      let switchLabel;
       let visibleWidget;
 
       if (!this.state.ready) {
           return <div>Wait...</div>
-      }
-  
-      if (this.state.on_line === true) {
-        dataInput = <Canvas onUpdated={this.handleUpdated} scale={this.state.scale} ratio={this.ratio} />;
-        switchLabel = "On-line recognition";
-      } else {
-        dataInput = <h2 className="text-center">Under development</h2>;
-        switchLabel = "Off-line recognition";
       }
   
       if (this.state.complete) {
@@ -150,16 +140,12 @@ export default class RecognitionWidget extends React.Component {
   
       return (
         <div>
-          <MySwitch label={switchLabel} checked={this.state.on_line}
-                    onChange={(e) => {this.handleChange()}} />
-  
-          {dataInput}
-  
+          <Button disabled={!this.state.complete} onClick={e => this.handleZoomIn()}>Zoom in</Button>
+          <Button disabled={!this.state.complete} onClick={e => this.handleZoomOut()}>Zoom out</Button>
+          <Canvas disabled={!this.state.complete} onUpdated={this.handleUpdated} scale={this.state.scale} ratio={this.ratio} />
           <SettingsPanel onDecoderChange={this.handleDecoderChange}
                          onDictSizeChange={this.handleDictSizeChange} />
           {visibleWidget}
-          <Button onClick={e => this.handleZoomIn()}>Zoom in</Button>
-          <Button onClick={e => this.handleZoomOut()}>Zoom out</Button>
         </div>
       );
     }

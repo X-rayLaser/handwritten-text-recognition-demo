@@ -55,6 +55,10 @@ export default class Canvas extends React.Component {
       let self = this;
   
       function handleMouseDown(e) {
+        if (self.props.disabled) {
+          return;
+        }
+        
         drawing = true;
         let p = self.getPoint(e, canvas);
 
@@ -142,11 +146,17 @@ export default class Canvas extends React.Component {
     }
   
     render() {
+      let styleProps = {};
+
+      if (this.props.disabled) {
+        styleProps.background = "#999";
+      }
+
       return (
         <div>
-          <canvas ref={this.canvasRef}></canvas>
-          <Button variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
-          <Button variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.painter.getPoints())}>Recognize</Button>
+          <canvas style={styleProps} ref={this.canvasRef}></canvas>
+          <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
+          <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.painter.getPoints())}>Recognize</Button>
         </div>
       );
     }

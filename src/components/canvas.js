@@ -219,6 +219,9 @@ export default class Canvas extends React.Component {
       this.handleMouseMove = this.handleMouseMove.bind(this);
       this.handleMouseUp = this.handleMouseUp.bind(this);
       this.handleWindowResize = this.handleWindowResize.bind(this);
+
+      this.handleClear = this.handleClear.bind(this);
+      this.handleRecognize = this.handleRecognize.bind(this);
     }
  
     handleMouseDown(x, y) {      
@@ -242,6 +245,7 @@ export default class Canvas extends React.Component {
     }
 
     handleMouseUp() {
+      this.sequence.markEndOfStroke();
       this.points = this.sequence.getPoints();
     }
 
@@ -252,6 +256,10 @@ export default class Canvas extends React.Component {
       this.setState((state, props) => ({
         clearCounter: state.clearCounter + 1
       }));
+    }
+
+    handleRecognize() {
+      this.props.onUpdated(this.points);
     }
 
     updateCanvas() {
@@ -301,8 +309,14 @@ export default class Canvas extends React.Component {
                       onMouseUp={this.handleMouseUp} 
                       disabled={this.props.disabled}
                       clearCounter={this.state.clearCounter} />
-          <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
-          <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.points)}>Recognize</Button>
+          <Button disabled={this.props.disabled} variant="primary" 
+                  sz="lg" onClick={this.handleClear}>
+            Clear
+          </Button>
+          <Button disabled={this.props.disabled} variant="primary" 
+                  sz="lg" onClick={this.handleRecognize}>
+            Recognize
+          </Button>
         </div>
       );
     }
@@ -321,11 +335,15 @@ class Sequence {
     addPoint(p, newStroke) {
         if (newStroke) {
             if (this.points.length > 0) {
-                this.points[this.points.length - 1][3] = 1;
+                this.markEndOfStroke();
             }
         }
 
         this.points.push(p);
+    }
+
+    markEndOfStroke() {
+      this.points[this.points.length - 1][3] = 1;
     }
 
     getPoints() {

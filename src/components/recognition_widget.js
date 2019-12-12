@@ -34,7 +34,7 @@ export default class RecognitionWidget extends React.Component {
         complete: true,
         best_match: "",
         top_results: [],
-        scale: 0.5
+        scale: 1
       };
 
       worker.onmessage = e => {
@@ -55,7 +55,7 @@ export default class RecognitionWidget extends React.Component {
         //handle errors here
       };
   
-      this.ratio = 7;
+      this.ratio = 6907 / 1110;
       this.decodingAlgorithm = 'Token passing';
       this.dictSize = 1000;
   
@@ -142,7 +142,11 @@ export default class RecognitionWidget extends React.Component {
         <div>
           <Button disabled={!this.state.complete} onClick={e => this.handleZoomIn()}>Zoom in</Button>
           <Button disabled={!this.state.complete} onClick={e => this.handleZoomOut()}>Zoom out</Button>
-          <Canvas disabled={!this.state.complete} onUpdated={this.handleUpdated} scale={this.state.scale} ratio={this.ratio} />
+          <Canvas disabled={!this.state.complete} 
+              onUpdated={this.handleUpdated}
+              scale={this.state.scale} ratio={this.ratio}
+              pixelsPerLetter={195}
+               />
           <SettingsPanel onDecoderChange={this.handleDecoderChange}
                          onDictSizeChange={this.handleDictSizeChange} />
           {visibleWidget}

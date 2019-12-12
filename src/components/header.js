@@ -7,10 +7,9 @@ import Nav from 'react-bootstrap/Nav';
 function HeroUnit(props) {
     return (
       <Jumbotron>
-        <h1>Hello, world</h1>
+        <h1>This is a prototype for a hand-writing text recognition app</h1>
         <p>
-          This is a simple hero unit, a simple jumbotron-style component for calling
-          extra attention to featured content or information.
+          Give it try by drawing a text on a canvas below!
         </p>
       </Jumbotron>
     );
@@ -21,11 +20,9 @@ export default function PageHeader(props) {
     return (
       <div>
         <Navbar bg="dark" variant="dark">
-          <Navbar.Brand href="#home">Navbar</Navbar.Brand>
           <Nav className="mr-auto">
             <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#features">Features</Nav.Link>
-            <Nav.Link href="#pricing">Pricing</Nav.Link>
+            <Nav.Link href="#about">About</Nav.Link>
           </Nav>
         </Navbar>
         <br />

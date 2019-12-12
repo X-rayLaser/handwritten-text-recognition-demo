@@ -166,7 +166,8 @@ class WhiteBoard extends React.Component {
   relevantPropsChanged(currentProps, previousProps) {
     return !(currentProps.width === previousProps.width &&
              currentProps.height === previousProps.height &&
-             currentProps.cellSize === previousProps.cellSize);
+             currentProps.cellSize === previousProps.cellSize &&
+             currentProps.clearCounter === previousProps.clearCounter);
   }
 
   componentDidUpdate(prevProps) {
@@ -177,7 +178,6 @@ class WhiteBoard extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log('componentWillUnmount');
     this.listenerStore.removeListeners();
   }
 
@@ -211,7 +211,8 @@ export default class Canvas extends React.Component {
       this.state = {
         canvasWidth: 500,
         canvasHeight: 200,
-        cellSize: 40
+        cellSize: 40,
+        clearCounter: 0
       };
 
       this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -247,7 +248,10 @@ export default class Canvas extends React.Component {
     handleClear() {
       this.sequence.points = [];
       this.points = [];
-      this.forceUpdate();
+      
+      this.setState((state, props) => ({
+        clearCounter: state.clearCounter + 1
+      }));
     }
 
     updateCanvas() {
@@ -295,7 +299,8 @@ export default class Canvas extends React.Component {
                       onMouseDown={this.handleMouseDown} 
                       onMouseMove={this.handleMouseMove} 
                       onMouseUp={this.handleMouseUp} 
-                      disabled={this.props.disabled} />
+                      disabled={this.props.disabled}
+                      clearCounter={this.state.clearCounter} />
           <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.handleClear()}>Clear</Button>
           <Button disabled={this.props.disabled} variant="primary" sz="lg" onClick={e => this.props.onUpdated(this.points)}>Recognize</Button>
         </div>

@@ -64,3 +64,53 @@ export class FileLoader {
         this.fetchWordIndex('5000', 'words.txt');
     }
 }
+
+export class EventListenersStore {
+    constructor() {
+      this.eventListeners = [];
+    }
+  
+    addEventListener(element, event, handler) {
+      element.addEventListener(event, handler);
+      this.eventListeners.push({
+        element: element,
+        event: event,
+        handler: handler
+      });
+    }
+  
+    removeListeners() {
+      this.eventListeners.forEach(obj => {
+        obj.element.removeEventListener(obj.event, obj.handler);
+      });
+  
+      this.eventListeners = [];
+    }
+}
+
+
+function drawTestExample(ratio, scale, painter) {
+    let self = this;
+    fetch('http://localhost:8080/blstm/test_example.json').then(response => {
+      response.json().then(res => {
+        let points = res.points;
+        let first = true;
+        points.forEach(stroke => {
+          let newStroke = true;
+          stroke.forEach(point => {
+            let [x, y, t] = point;
+            x = x / ratio * scale;
+            y = y / ratio * scale;
+            let p = [x, y, t, 0];
+            if (first) {
+              painter.addFirstPoint(p);
+            } else {
+              painter.addPoint(p, newStroke);
+            }
+            newStroke = false;
+            first = false;
+          });
+        });
+      });
+    });
+}

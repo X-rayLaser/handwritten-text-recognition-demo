@@ -1,8 +1,9 @@
 import * as tf from '@tensorflow/tfjs';
+import { dataInfoUrl, wordIndexUrl, tsjsModelUrl } from './config';
 
 
 export function fetchDataInfo(onFetched) {
-    fetch('http://localhost:8080/blstm/data_info.json').then(response => {
+    fetch(dataInfoUrl).then(response => {
         response.json().then(res => {
             onFetched(res);
         });
@@ -43,7 +44,8 @@ export class FileLoader {
     }
 
     fetchWordIndex(location, fileName) {
-        let uri = `http://localhost:8080/word_indices/${location}/${fileName}`;
+        let uri = wordIndexUrl(location, fileName);
+        
         fetch(uri).then(response => {
             response.text().then(text => {
                 let wordIndex = text.split('\n');
@@ -55,7 +57,7 @@ export class FileLoader {
     }
 
     fetchModel() {
-        tf.loadLayersModel('http://localhost:8080/blstm/model.json').then(m => {
+        tf.loadLayersModel(tsjsModelUrl).then(m => {
             this.model = m;
             this.notifyWhenComplete();
         });
@@ -98,7 +100,7 @@ export class EventListenersStore {
 
 function drawTestExample(ratio, scale, painter) {
     let self = this;
-    fetch('http://localhost:8080/blstm/test_example.json').then(response => {
+    fetch(testExampleUrl).then(response => {
       response.json().then(res => {
         let points = res.points;
         let first = true;

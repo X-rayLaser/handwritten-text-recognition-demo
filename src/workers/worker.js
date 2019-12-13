@@ -3,6 +3,8 @@ import * as tf from '@tensorflow/tfjs';
 import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder } from '../recognition';
 import { FileLoader } from '../util';
 
+import { tsjsModelUrl } from '../config';
+
 let preprocessor = null;
 
 let tokenPassing = null;
@@ -59,7 +61,7 @@ onmessage = function(e) {
     if (message === 'recognize') {
         let {points} = data;
         
-        tf.loadLayersModel('http://localhost:8080/blstm/model.json').then(model => {
+        tf.loadLayersModel(tsjsModelUrl).then(model => {
             let preprocessed = preprocessor.preprocess(points);
 
             let recognizer = new Recognizer(model, currentDecoder);

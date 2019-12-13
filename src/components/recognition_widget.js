@@ -34,13 +34,21 @@ export default class RecognitionWidget extends React.Component {
         dataInfoFetched: false,
         targetWidth: 100,
         pixelsPerLetter: 100,
-        on_line: true,
         complete: true,
         best_match: "",
         top_results: [],
         scale: 1
       };
 
+      this.dataInfo = null;
+      this.decodingAlgorithm = 'Token passing';
+      this.dictSize = 1000;
+
+      this.subscribeToWorker();
+      this.bindEventHandlers();
+    }
+
+    subscribeToWorker() {
       worker.onmessage = e => {
         let {message, data} = e.data;
         if (message === 'init') {
@@ -55,27 +63,22 @@ export default class RecognitionWidget extends React.Component {
         }
       };
 
-      this.dataInfo = null;
-
       worker.onerror = e => {
         //handle errors here
       };
-      
-      fetchDataInfo(dataInfo => {
-        this.dataInfo = dataInfo;
-        this.setState({
-          dataInfoFetched: true,
-          targetWidth: dataInfo.horizontal_resolution,
-          pixelsPerLetter: dataInfo.pixels_per_letter
-        });
+
+      worker.postMessage({
+          message: 'signalWhenInitialized',
+          data: {}
       });
-  
-      this.decodingAlgorithm = 'Token passing';
-      this.dictSize = 1000;
-  
+    }
+
+    bindEventHandlers() {
       this.handleUpdated = this.handleUpdated.bind(this);
       this.handleDictSizeChange = this.handleDictSizeChange.bind(this);
       this.handleDecoderChange = this.handleDecoderChange.bind(this);
+      this.handleZoomIn = this.handleZoomIn.bind(this);
+      this.handleZoomOut = this.handleZoomOut.bind(this);
     }
  
     handleDictSizeChange(dictSize) {
@@ -128,6 +131,17 @@ export default class RecognitionWidget extends React.Component {
         }
       });
     }
+
+    componentDidMount() {
+      fetchDataInfo(dataInfo => {
+        this.dataInfo = dataInfo;
+        this.setState({
+          dataInfoFetched: true,
+          targetWidth: dataInfo.horizontal_resolution,
+          pixelsPerLetter: dataInfo.pixels_per_letter
+        });
+      });
+    }
   
     render() {
       let visibleWidget;
@@ -146,18 +160,37 @@ export default class RecognitionWidget extends React.Component {
   
       return (
         <div>
-          <Button disabled={!this.state.complete} onClick={e => this.handleZoomIn()}>Zoom in</Button>
-          <Button disabled={!this.state.complete} onClick={e => this.handleZoomOut()}>Zoom out</Button>
+          <Button disabled={!this.state.complete} onClick={this.handleZoomIn}>Zoom in</Button>
+          <Button disabled={!this.state.complete} onClick={this.handleZoomOut}>Zoom out</Button>
           <Canvas disabled={!this.state.complete} 
-              onUpdated={this.handleUpdated}
-              scale={this.state.scale} ratio={this.ratio}
-              targetWidth={this.state.targetWidth}
-              pixelsPerLetter={this.state.pixelsPerLetter}
-               />
+                  onUpdated={this.handleUpdated}
+                  scale={this.state.scale} ratio={this.ratio}
+                  targetWidth={this.state.targetWidth}
+                  pixelsPerLetter={this.state.pixelsPerLetter} />
           <SettingsPanel onDecoderChange={this.handleDecoderChange}
                          onDictSizeChange={this.handleDictSizeChange} />
           {visibleWidget}
+          <Info />
         </div>
       );
     }
+}
+
+function Info(props) {
+  return (
+    <section>
+      <p>
+        To get a higher accuracy, try to draw a text just like you would with a pencil.
+      </p>
+      <p>By default, Token Passing algorithm is used for decoding, with 
+          dictionary containing 1000 words. You can change the size of the 
+          dictionary or switch to Best Path decoding algorithm.
+      </p>
+      <p>Note that with Token Passing algorithm only words that are in the 
+        dictionary will be recognized.
+        Also, the running time of Token Passing decoding algorithm is proportional
+        to the square of dictionary size.
+      </p>
+    </section>
+  );
 }

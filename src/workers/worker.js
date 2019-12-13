@@ -15,6 +15,8 @@ let currentDecoder = null;
 
 let wordsIndices = {};
 
+let ready = false;
+
 function sendPostMessage(message, dataObject) {
     postMessage({
         'message': message,
@@ -51,6 +53,8 @@ const loader = new FileLoader(obj => {
 
     currentDecoder = tokenPassing;
 
+    ready = true;
+
     sendPostMessage('init', {});
 });
 
@@ -79,6 +83,10 @@ onmessage = function(e) {
             currentDecoder = tokenPassing;
         } else {
             currentDecoder = bestPath;
+        }
+    } else if (message === 'signalWhenInitialized') {
+        if (ready) {
+            sendPostMessage('init', {});
         }
     }
 }

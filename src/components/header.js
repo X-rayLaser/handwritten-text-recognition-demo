@@ -14,15 +14,15 @@ function HeroUnit(props) {
       </Jumbotron>
     );
 }
-  
+
   
 export default function PageHeader(props) {
     return (
       <div>
         <Navbar bg="dark" variant="dark">
           <Nav className="mr-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#about">About</Nav.Link>
+            <Nav.Link href="#/app/">Home</Nav.Link>
+            <Nav.Link href="#/about/">About</Nav.Link>
           </Nav>
         </Navbar>
         <br />

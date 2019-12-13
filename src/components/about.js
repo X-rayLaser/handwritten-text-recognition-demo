@@ -1,6 +1,6 @@
 import React from 'react';
 
-function About(props) {
+export default function About(props) {
     return (
         <div>
             <p>This is a prototype for a hand-writing text recognition app.

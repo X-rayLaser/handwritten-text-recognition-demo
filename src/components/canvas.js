@@ -61,7 +61,7 @@ export default class Canvas extends React.Component {
 
       let scale = this.props.scale;
 
-      let targetWidth = 6907;
+      let targetWidth = this.props.targetWidth;
       this.targetGeometry = new TargetSurfaceGeometry(width, targetWidth, scale);
       let cellPixelSize = this.targetGeometry.cellPixelSize(this.props.pixelsPerLetter);
       this.sequence.changeGeometry(this.targetGeometry);
@@ -87,7 +87,9 @@ export default class Canvas extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-      if (this.props.scale !== prevProps.scale) {
+      if (this.props.scale !== prevProps.scale ||
+          this.props.pixelsPerLetter !== prevProps.pixelsPerLetter ||
+          this.props.targetWidth !== prevProps.targetWidth) {
         this.updateCanvas();
         this.handleClear();
       }

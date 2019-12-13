@@ -1,6 +1,15 @@
 import * as tf from '@tensorflow/tfjs';
 
 
+export function fetchDataInfo(onFetched) {
+    fetch('http://localhost:8080/blstm/data_info.json').then(response => {
+        response.json().then(res => {
+            onFetched(res);
+        });
+    });
+}
+
+
 export class FileLoader {
     constructor(onLoad) {
         this.onLoad = onLoad;
@@ -27,11 +36,9 @@ export class FileLoader {
     }
 
     fetchDataInfo() {
-        fetch('http://localhost:8080/blstm/data_info.json').then(response => {
-            response.json().then(res => {
-                this.dataInfo = res;
-                this.notifyWhenComplete();
-            });
+        fetchDataInfo(res => {
+            this.dataInfo = res;
+            this.notifyWhenComplete();
         });
     }
 

@@ -6,6 +6,7 @@ import TranscriptionPanel from './transcription_panel';
 import SettingsPanel from './settings_panel';
 import MyProgressBar from './progress_bar';
 import Worker from '../workers/worker';
+import { fetchDataInfo } from '../util';
 
 
 function MySwitch(props) {
@@ -29,7 +30,10 @@ export default class RecognitionWidget extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-        ready: false,
+        workerReady: false,
+        dataInfoFetched: false,
+        targetWidth: 100,
+        pixelsPerLetter: 100,
         on_line: true,
         complete: true,
         best_match: "",
@@ -40,7 +44,7 @@ export default class RecognitionWidget extends React.Component {
       worker.onmessage = e => {
         let {message, data} = e.data;
         if (message === 'init') {
-          this.setState({ready: true});
+          this.setState({workerReady: true});
         } else if (message === 'resultReady') {
           let bestMatch = data;
           this.setState({
@@ -51,11 +55,21 @@ export default class RecognitionWidget extends React.Component {
         }
       };
 
+      this.dataInfo = null;
+
       worker.onerror = e => {
         //handle errors here
       };
+      
+      fetchDataInfo(dataInfo => {
+        this.dataInfo = dataInfo;
+        this.setState({
+          dataInfoFetched: true,
+          targetWidth: dataInfo.horizontal_resolution,
+          pixelsPerLetter: dataInfo.pixels_per_letter
+        });
+      });
   
-      this.ratio = 6907 / 1110;
       this.decodingAlgorithm = 'Token passing';
       this.dictSize = 1000;
   
@@ -63,13 +77,7 @@ export default class RecognitionWidget extends React.Component {
       this.handleDictSizeChange = this.handleDictSizeChange.bind(this);
       this.handleDecoderChange = this.handleDecoderChange.bind(this);
     }
-  
-    handleChange() {
-      this.setState((state, props) => ({
-        on_line: !state.on_line
-      }));
-    }
-
+ 
     handleDictSizeChange(dictSize) {
       this.dictSize = dictSize;
       worker.postMessage({
@@ -124,7 +132,7 @@ export default class RecognitionWidget extends React.Component {
     render() {
       let visibleWidget;
 
-      if (!this.state.ready) {
+      if (!(this.state.workerReady && this.state.dataInfoFetched)) {
           return <div>Wait...</div>
       }
   
@@ -143,7 +151,8 @@ export default class RecognitionWidget extends React.Component {
           <Canvas disabled={!this.state.complete} 
               onUpdated={this.handleUpdated}
               scale={this.state.scale} ratio={this.ratio}
-              pixelsPerLetter={195}
+              targetWidth={this.state.targetWidth}
+              pixelsPerLetter={this.state.pixelsPerLetter}
                />
           <SettingsPanel onDecoderChange={this.handleDecoderChange}
                          onDictSizeChange={this.handleDictSizeChange} />

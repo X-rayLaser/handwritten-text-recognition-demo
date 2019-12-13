@@ -64,6 +64,7 @@ export default class Canvas extends React.Component {
       let targetWidth = 6907;
       this.targetGeometry = new TargetSurfaceGeometry(width, targetWidth, scale);
       let cellPixelSize = this.targetGeometry.cellPixelSize(this.props.pixelsPerLetter);
+      this.sequence.changeGeometry(this.targetGeometry);
 
       this.setState({
         canvasWidth: width,
@@ -136,8 +137,13 @@ class Point4d {
 
 
 class Sequence {
-    constructor() {
+    constructor(targetGeometry) {
         this.points = [];
+        this.geometry = targetGeometry;
+    }
+
+    changeGeometry(targetGeometry) {
+      this.geometry = targetGeometry;
     }
 
     clear() {
@@ -150,7 +156,8 @@ class Sequence {
 
     addPoint(x, y) {
       let t = Date.now() / 1000; // measured in seconds
-      let p = new Point4d(x, y, t, 0);
+      let [xTarget, yTarget] = this.geometry.transformPoint(x, y);
+      let p = new Point4d(xTarget, yTarget, t, 0);
       this.points.push(p);
     }
 

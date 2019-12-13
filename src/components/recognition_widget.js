@@ -102,8 +102,6 @@ export default class RecognitionWidget extends React.Component {
       worker.postMessage({
           message: 'recognize',
           data: {
-            ratio: this.ratio,
-            scale: this.state.scale,
             points: points
           }
       }); 

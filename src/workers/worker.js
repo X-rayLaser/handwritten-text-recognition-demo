@@ -57,10 +57,10 @@ onmessage = function(e) {
     let {message, data} = e.data;
 
     if (message === 'recognize') {
-        let {ratio, scale, points} = data;
+        let {points} = data;
         
         tf.loadLayersModel('http://localhost:8080/blstm/model.json').then(model => {
-            let preprocessed = preprocessor.preprocess(points, ratio, scale);
+            let preprocessed = preprocessor.preprocess(points);
 
             let recognizer = new Recognizer(model, currentDecoder);
             let res = recognizer.predict(preprocessed);

@@ -1,5 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import { dataInfoUrl, wordIndexUrl, tsjsModelUrl } from './config';
+import { BestPathDecoder, TokenPassingDecoder } from './recognition';
 
 
 export function fetchDataInfo(onFetched) {
@@ -122,4 +123,40 @@ function drawTestExample(ratio, scale, painter) {
         });
       });
     });
+}
+
+
+export const BEST_PATH_ALGORITHM = 'Best Path';
+export const TOKEN_PASSING_ALGORITHM = 'Token Passing';
+
+
+export function makeBestPathMetaObject() {
+  return new DecoderMetaData(BEST_PATH_ALGORITHM, {});
+}
+
+
+export function makeTokenPassingMetaObject(dictionarySize) {
+  return new DecoderMetaData(TOKEN_PASSING_ALGORITHM, { 
+    dictSize: dictionarySize
+  });
+}
+
+
+export class DecoderMetaData {
+  constructor(algorithmName, params) {
+    this.algorithmName = algorithmName;
+    this.params = params;
+  }
+}
+
+export function isValidDecoderName(name) {
+  return (name === BEST_PATH_ALGORITHM || name === TOKEN_PASSING_ALGORITHM);
+}
+
+
+export const allowedDictionarySizes = [1000, 2000, 3000, 4000, 5000];
+
+
+export function isValidDictionarySize(dictionarySize) {
+  return allowedDictionarySizes.includes(dictionarySize); 
 }

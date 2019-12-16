@@ -1,7 +1,7 @@
 importScripts('token_passing.js');
 import * as tf from '@tensorflow/tfjs';
 import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder } from '../recognition';
-import { FileLoader } from '../util';
+import { FileLoader, BEST_PATH_ALGORITHM, TOKEN_PASSING_ALGORITHM } from '../util';
 
 import { tsjsModelUrl } from '../config';
 
@@ -10,8 +10,6 @@ let preprocessor = null;
 let tokenPassing = null;
 
 let bestPath = null;
-
-let currentDecoder = null;
 
 let wordsIndices = {};
 
@@ -51,43 +49,59 @@ const loader = new FileLoader(obj => {
 
     bestPath = new BestPathDecoder(dataInfo);
 
-    currentDecoder = tokenPassing;
-
     ready = true;
 
     sendPostMessage('init', {});
 });
 
 
+const chooseDecoder = decoderMetaObject => {
+    let {algorithmName, params} = decoderMetaObject;
+
+    if (algorithmName === TOKEN_PASSING_ALGORITHM) {
+        let size = params.dictSize;
+        let dictParams = buildDictParams(size);
+        tokenPassing.setDictionary(dictParams);
+        return tokenPassing;
+    } else {
+        return bestPath;
+    }
+};
+
+
+const asyncPredictResult = (points, decoder) => {
+    tf.loadLayersModel(tsjsModelUrl).then(model => {
+        let preprocessed = preprocessor.preprocess(points);
+
+        let recognizer = new Recognizer(model, decoder);
+        let res = recognizer.predict(preprocessed);
+        //sometimes predict returns undefined in the resulting string
+        sendPostMessage('resultReady', res);
+    });
+};
+
+
+const handleRecognize = data => {
+    let {points, decoderMetaObject} = data;
+    let decoder = chooseDecoder(decoderMetaObject);
+    asyncPredictResult(points, decoder);
+};
+
+
+const handleSignalWhenInitialized = () => {
+    if (ready) {
+        sendPostMessage('init', {});
+    }
+};
+
+
 onmessage = function(e) {
     let {message, data} = e.data;
 
     if (message === 'recognize') {
-        let {points} = data;
-        
-        tf.loadLayersModel(tsjsModelUrl).then(model => {
-            let preprocessed = preprocessor.preprocess(points);
-
-            let recognizer = new Recognizer(model, currentDecoder);
-            let res = recognizer.predict(preprocessed);
-            //sometimes predict returns undefined in the resulting string
-            sendPostMessage('resultReady', res);
-        });
-    } else if (message === 'changeDecoder') {
-        let {decodingAlgorithm, algorithmParams} = data;
-        
-        if (decodingAlgorithm === 'Token passing') {
-            let size = algorithmParams.dictSize;
-            let dictParams = buildDictParams(size);
-            tokenPassing.setDictionary(dictParams);
-            currentDecoder = tokenPassing;
-        } else {
-            currentDecoder = bestPath;
-        }
+        handleRecognize(data);
     } else if (message === 'signalWhenInitialized') {
-        if (ready) {
-            sendPostMessage('init', {});
-        }
+        handleSignalWhenInitialized();
     }
 }
 

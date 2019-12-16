@@ -6,7 +6,8 @@ import TranscriptionPanel from './transcription_panel';
 import SettingsPanel from './settings_panel';
 import MyProgressBar from './progress_bar';
 import Worker from '../workers/worker';
-import { fetchDataInfo } from '../util';
+import { fetchDataInfo, makeBestPathMetaObject, makeTokenPassingMetaObject,
+  allowedDictionarySizes, TOKEN_PASSING_ALGORITHM } from '../util';
 
 
 function MySwitch(props) {
@@ -29,6 +30,9 @@ let worker = new Worker();
 export default class RecognitionWidget extends React.Component {
     constructor(props) {
       super(props);
+      
+      this.dataInfo = null;
+
       this.state = {
         workerReady: false,
         dataInfoFetched: false,
@@ -37,12 +41,10 @@ export default class RecognitionWidget extends React.Component {
         complete: true,
         best_match: "",
         top_results: [],
-        scale: 1
+        scale: 1,
+        decodingAlgorithm: TOKEN_PASSING_ALGORITHM,
+        dictSize: allowedDictionarySizes[0]
       };
-
-      this.dataInfo = null;
-      this.decodingAlgorithm = 'Token passing';
-      this.dictSize = 1000;
 
       this.subscribeToWorker();
       this.bindEventHandlers();
@@ -82,40 +84,38 @@ export default class RecognitionWidget extends React.Component {
     }
  
     handleDictSizeChange(dictSize) {
-      this.dictSize = dictSize;
-      worker.postMessage({
-          message: 'changeDecoder',
-          data: {
-            decodingAlgorithm: 'Token passing',
-            algorithmParams: { dictSize: this.dictSize }
-          }
+      this.setState({
+        dictSize,
+        decodingAlgorithm: TOKEN_PASSING_ALGORITHM
       });
     }
 
     handleDecoderChange(decodingAlgorithm) {
-      let params;
-      if (decodingAlgorithm === 'Token passing') {
-        params = { dictSize: this.dictSize };
-      } else {
-        params = {};
-      }
-      worker.postMessage({
-          message: 'changeDecoder',
-          data: {
-            decodingAlgorithm: decodingAlgorithm,
-            algorithmParams: params
-          }
+      this.setState({
+        decodingAlgorithm
       });
     }
   
+    postJobToWorker(points) {
+      let decoderMetaObject;
+      if (this.state.decodingAlgorithm === TOKEN_PASSING_ALGORITHM) {
+        decoderMetaObject = makeTokenPassingMetaObject(this.state.dictSize);
+      } else {
+        decoderMetaObject = makeBestPathMetaObject();
+      }
+
+      worker.postMessage({
+        message: 'recognize',
+        data: {
+          points: points,
+          decoderMetaObject
+        }
+      });
+    }
+
     handleUpdated(points) {
       this.setState({complete: false});
-      worker.postMessage({
-          message: 'recognize',
-          data: {
-            points: points
-          }
-      }); 
+      this.postJobToWorker(points);
     }
   
     handleZoomIn() {
@@ -168,7 +168,9 @@ export default class RecognitionWidget extends React.Component {
                   targetWidth={this.state.targetWidth}
                   pixelsPerLetter={this.state.pixelsPerLetter} />
           <SettingsPanel onDecoderChange={this.handleDecoderChange}
-                         onDictSizeChange={this.handleDictSizeChange} />
+                         onDictSizeChange={this.handleDictSizeChange}
+                         decodingAlgorithm={this.state.decodingAlgorithm}
+                         dictSize={this.state.dictSize} />
           {visibleWidget}
           <Info />
         </div>

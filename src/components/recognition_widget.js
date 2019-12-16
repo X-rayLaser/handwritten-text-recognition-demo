@@ -7,7 +7,8 @@ import SettingsPanel from './settings_panel';
 import MyProgressBar from './progress_bar';
 import Worker from '../workers/worker';
 import { fetchDataInfo, makeBestPathMetaObject, makeTokenPassingMetaObject,
-  allowedDictionarySizes, TOKEN_PASSING_ALGORITHM } from '../util';
+  defaultDictionarySize, allowedDictionarySizes, TOKEN_PASSING_ALGORITHM
+} from '../util';
 
 
 function MySwitch(props) {
@@ -43,7 +44,7 @@ export default class RecognitionWidget extends React.Component {
         top_results: [],
         scale: 1,
         decodingAlgorithm: TOKEN_PASSING_ALGORITHM,
-        dictSize: allowedDictionarySizes[0]
+        dictSize: defaultDictionarySize
       };
 
       this.subscribeToWorker();
@@ -66,6 +67,8 @@ export default class RecognitionWidget extends React.Component {
       };
 
       worker.onerror = e => {
+        console.error('Error happend in a worker:');
+        console.error(e);
         //handle errors here
       };
 
@@ -133,7 +136,7 @@ export default class RecognitionWidget extends React.Component {
     }
 
     componentDidMount() {
-      fetchDataInfo(dataInfo => {
+      fetchDataInfo().then(dataInfo => {
         this.dataInfo = dataInfo;
         this.setState({
           dataInfoFetched: true,

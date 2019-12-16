@@ -2,76 +2,85 @@ import * as tf from '@tensorflow/tfjs';
 import { dataInfoUrl, wordIndexUrl, tsjsModelUrl } from './config';
 import { BestPathDecoder, TokenPassingDecoder } from './recognition';
 
+export const allowedDictionarySizes = [1000, 2000, 3000, 4000, 5000];
+export const defaultDictionarySize = allowedDictionarySizes[0];
 
-export function fetchDataInfo(onFetched) {
-    fetch(dataInfoUrl).then(response => {
-        response.json().then(res => {
-            onFetched(res);
-        });
+
+export function fetchDataInfo() {
+    return fetch(dataInfoUrl).then(response => {
+      return response.json();
     });
 }
 
 
 export class FileLoader {
-    constructor(onLoad) {
-        this.onLoad = onLoad;
+    constructor() {
         this.dataInfo = null;
         this.model = null;
         this.wordsIndices = {};
-        this.numIndexFiles = 4;
-        this.loadedIndices = 0;
     }
-
-    fetchedAll() {
-        return this.dataInfo !== null && this.model !== null && 
-                    this.loadedIndices >= this.numIndexFiles;
-    }
-
-    notifyWhenComplete() {
-        if (this.fetchedAll() === true) {
-            this.onLoad({
-                dataInfo: this.dataInfo,
-                model: this.model,
-                indices: this.wordsIndices
-            });
-        }
+    
+    getResult() {
+      return {
+        dataInfo: this.dataInfo,
+        model: this.model,
+        indices: this.wordsIndices
+      };
     }
 
     fetchDataInfo() {
-        fetchDataInfo(res => {
-            this.dataInfo = res;
-            this.notifyWhenComplete();
+        let promise = fetchDataInfo().then(res => {
+          this.dataInfo = res;
+          return res;
         });
+
+        return promise;
     }
 
     fetchWordIndex(location, fileName) {
         let uri = wordIndexUrl(location, fileName);
-        
-        fetch(uri).then(response => {
-            response.text().then(text => {
-                let wordIndex = text.split('\n');
-                this.wordsIndices[location] = wordIndex;
-                this.loadedIndices += 1;
-                this.notifyWhenComplete();
-            });
+
+        let promise = fetch(uri).then(response => {
+          return response.text();
+        }).then(text => {
+          let wordIndex = text.split('\n');
+          this.wordsIndices[location] = wordIndex;
+
+          return {
+            location,
+            wordIndex
+          };
         });
+
+        return promise;
     }
 
     fetchModel() {
-        tf.loadLayersModel(tsjsModelUrl).then(m => {
+        let promise = tf.loadLayersModel(tsjsModelUrl).then(m => {
             this.model = m;
-            this.notifyWhenComplete();
+            return m;
         });
+
+        return promise;
     }
 
     fetch() {
-        this.fetchDataInfo();
-        this.fetchModel();
-        this.fetchWordIndex('1000', 'words.txt');
-        this.fetchWordIndex('2000', 'words.txt');
-        this.fetchWordIndex('3000', 'words.txt');
-        this.fetchWordIndex('4000', 'words.txt');
-        this.fetchWordIndex('5000', 'words.txt');
+        let dataInfoPromise = this.fetchDataInfo();
+        let modelPromise = this.fetchModel();
+
+        let indexPromises = allowedDictionarySizes.map(size => 
+          this.fetchWordIndex(String(size), 'words.txt')
+        );
+        
+        let promiseArray = [dataInfoPromise, modelPromise, ...indexPromises];
+
+        return Promise.all(promiseArray).then(result => {
+          return {
+            dataInfo: this.dataInfo,
+            model: this.model,
+            indices: this.wordsIndices
+          };
+        });
     }
 }
 
@@ -152,10 +161,6 @@ export class DecoderMetaData {
 export function isValidDecoderName(name) {
   return (name === BEST_PATH_ALGORITHM || name === TOKEN_PASSING_ALGORITHM);
 }
-
-
-export const allowedDictionarySizes = [1000, 2000, 3000, 4000, 5000];
-
 
 export function isValidDictionarySize(dictionarySize) {
   return allowedDictionarySizes.includes(dictionarySize); 

@@ -3,7 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder 
 } from '../recognition';
 
-import { FileLoader, NewLoader, defaultDictionarySize, TOKEN_PASSING_ALGORITHM 
+import { FileLoader, defaultDictionarySize, TOKEN_PASSING_ALGORITHM 
 } from '../util';
 
 import { tsjsModelUrl } from '../config';
@@ -42,7 +42,6 @@ function buildDictParams(dictSize) {
 
 
 const loader = new FileLoader();
-//const loader = new NewLoader();
 
 
 const chooseDecoder = decoderMetaObject => {
@@ -67,6 +66,8 @@ const asyncPredictResult = (points, decoder) => {
         let res = recognizer.predict(preprocessed);
         //sometimes predict returns undefined in the resulting string
         sendPostMessage('resultReady', res);
+    }).catch(reason => {
+        sendErrorMessage(reason);
     });
 };
 
@@ -97,7 +98,7 @@ onmessage = function(e) {
 
 loader.fetch().then(obj => {
     let {dataInfo, indices} = obj;
-    console.log(obj);
+
     wordsIndices = indices;
     let dictParams = buildDictParams(defaultDictionarySize);
 
@@ -110,7 +111,12 @@ loader.fetch().then(obj => {
 
     sendPostMessage('init', {});
 }).catch(reason => {
-    setTimeout(() => {
-        throw new Error(reason);
-    }, 10);
+    sendErrorMessage(reason);
 });
+
+
+function sendErrorMessage(msg) {
+    setTimeout(() => {
+        throw new Error(msg);
+    }, 10);
+}

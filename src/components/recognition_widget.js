@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import Alert from 'react-bootstrap/Alert';
 import Canvas from './canvas';
 import TranscriptionPanel from './transcription_panel';
 import SettingsPanel from './settings_panel';
@@ -35,6 +36,7 @@ export default class RecognitionWidget extends React.Component {
       this.dataInfo = null;
 
       this.state = {
+        errorMsg: "",
         workerReady: false,
         dataInfoFetched: false,
         targetWidth: 100,
@@ -61,7 +63,8 @@ export default class RecognitionWidget extends React.Component {
           this.setState({
               complete: true,
               best_match: bestMatch,
-              top_results: [bestMatch]
+              top_results: [bestMatch],
+              errorMsg: ""
           });
         }
       };
@@ -69,7 +72,12 @@ export default class RecognitionWidget extends React.Component {
       worker.onerror = e => {
         console.error('Error happend in a worker:');
         console.error(e);
-        //handle errors here
+        this.setState({
+            complete: true,
+            best_match: "",
+            top_results: [],
+            errorMsg: e.message
+        });
       };
 
       worker.postMessage({
@@ -117,7 +125,7 @@ export default class RecognitionWidget extends React.Component {
     }
 
     handleUpdated(points) {
-      this.setState({complete: false});
+      this.setState({complete: false, errorMsg: ""});
       this.postJobToWorker(points);
     }
   
@@ -153,7 +161,14 @@ export default class RecognitionWidget extends React.Component {
           return <div>Wait...</div>
       }
   
-      if (this.state.complete) {
+      if (this.state.complete && this.state.errorMsg) {
+        visibleWidget = (
+          <Alert variant="danger">
+            <Alert.Heading>Recognition failed for the following reason</Alert.Heading>
+            <p>{this.state.errorMsg}</p>
+          </Alert>
+        );
+      } else if (this.state.complete && !this.state.showError) {
         visibleWidget = <TranscriptionPanel
                             best_match={this.state.best_match}
                             top_results={this.state.top_results} />;

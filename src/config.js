@@ -17,3 +17,5 @@ export const wordIndexUrl = dictionarySize => {
 export const tsjsModelUrl = `${baseUrl}/blstm/model.json`;
 
 export const testExampleUrl = `${baseUrl}/blstm/test_example.json`;
+
+export const retryInterval = 1000;

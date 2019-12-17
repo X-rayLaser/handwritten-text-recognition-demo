@@ -1,21 +1,51 @@
-import { dataInfoUrl, wordIndexUrl } from './config';
+import { dataInfoUrl, wordIndexUrl, retryInterval } from './config';
 
 export const allowedDictionarySizes = [1000, 2000, 3000, 4000, 5000];
 export const defaultDictionarySize = allowedDictionarySizes[0];
 
 
-function fetchFile(url) {
+function tryFetch(url) {
   return new Promise((resolve, reject) => {
     fetch(url).then(response => {
+      
       if (response.ok) {
         resolve(response);
       } else {
         reject({
           code: response.status,
           statusText: response.statusText
-        })
+        });
       }
+    }).catch(reason => {
+      reject(reason);
     });
+  });
+}
+
+
+function retry(url, resolve, reject, attempts) {
+  tryFetch(url).then(response => {
+    resolve(response);
+    return response;
+  }).catch(reason => {
+    if (reason.hasOwnProperty('code') && reason.code === 404) {
+      reject(reason);
+      return;
+    }
+    if (attempts > 0) {
+      setTimeout(() => {
+        retry(url, resolve, reject, attempts - 1);
+      }, retryInterval);
+    } else {
+      reject(reason);
+    }
+  });
+}
+
+
+function fetchFile(url) {
+  return new Promise((resolve, reject) => {
+    retry(url, resolve, reject, 4);
   });
 }
 

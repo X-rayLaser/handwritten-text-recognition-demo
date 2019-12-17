@@ -1,86 +1,108 @@
-import * as tf from '@tensorflow/tfjs';
-import { dataInfoUrl, wordIndexUrl, tsjsModelUrl } from './config';
-import { BestPathDecoder, TokenPassingDecoder } from './recognition';
+import { dataInfoUrl, wordIndexUrl } from './config';
 
 export const allowedDictionarySizes = [1000, 2000, 3000, 4000, 5000];
 export const defaultDictionarySize = allowedDictionarySizes[0];
 
 
-export function fetchDataInfo() {
-    return fetch(dataInfoUrl).then(response => {
-      return response.json();
+function fetchFile(url) {
+  return new Promise((resolve, reject) => {
+    fetch(url).then(response => {
+      if (response.ok) {
+        resolve(response);
+      } else {
+        reject({
+          code: response.status,
+          statusText: response.statusText
+        })
+      }
     });
+  });
+}
+
+
+export function fetchDataInfo() {
+  let jsonPromise = fetchFile(dataInfoUrl).then(resp => resp.json());
+  return jsonPromise;
+}
+
+
+class TypeWrapper {
+  constructor(obj, isDataInfo) {
+    this.obj = obj;
+    this.isDataInfo = isDataInfo;
+  }
 }
 
 
 export class FileLoader {
-    constructor() {
-        this.dataInfo = null;
-        this.model = null;
-        this.wordsIndices = {};
+    fetch() {
+      let filesPromise = this.fetchFiles();
+      let promise = this.buildObjects(filesPromise);
+      return promise;
     }
-    
-    getResult() {
-      return {
-        dataInfo: this.dataInfo,
-        model: this.model,
-        indices: this.wordsIndices
-      };
+
+    fetchFiles() {
+      let dataInfoPromise = this.fetchDataInfo();
+
+      let indexPromises = allowedDictionarySizes.map(size => 
+        this.fetchWordIndex(size)
+      );
+      
+      let promiseArray = [dataInfoPromise, ...indexPromises];
+
+      return Promise.all(promiseArray)
     }
 
     fetchDataInfo() {
-        let promise = fetchDataInfo().then(res => {
-          this.dataInfo = res;
-          return res;
-        });
-
+        let jsonPromise = fetchDataInfo();
+        let isDataInfo = true;
+        let promise = jsonPromise.then(result => new TypeWrapper(result, isDataInfo));
         return promise;
     }
 
-    fetchWordIndex(location, fileName) {
-        let uri = wordIndexUrl(location, fileName);
+    fetchWordIndex(dictionarySize) {
+        let uri = wordIndexUrl(dictionarySize);
 
-        let promise = fetch(uri).then(response => {
+        let promise = fetchFile(uri).then(response => {
           return response.text();
         }).then(text => {
           let wordIndex = text.split('\n');
-          this.wordsIndices[location] = wordIndex;
-
-          return {
-            location,
+          let isDataInfo = false;
+          let obj =  {
+            location: dictionarySize,
             wordIndex
           };
+          return new TypeWrapper(obj, isDataInfo);
         });
 
         return promise;
     }
 
-    fetchModel() {
-        let promise = tf.loadLayersModel(tsjsModelUrl).then(m => {
-            this.model = m;
-            return m;
-        });
+    buildObjects(filesPromise) {
+      return filesPromise.then(fetchedObjects => {
+        let dataInfo = this.buildDataInfo(fetchedObjects);
+        let indices = this.buildIndices(fetchedObjects);
 
-        return promise;
+        return {
+          dataInfo,
+          indices
+        };
+      });
     }
 
-    fetch() {
-        let dataInfoPromise = this.fetchDataInfo();
-        let modelPromise = this.fetchModel();
+    buildDataInfo(fetchedObjects) {
+      return fetchedObjects.filter(obj => obj.isDataInfo)[0].obj;
+    }
 
-        let indexPromises = allowedDictionarySizes.map(size => 
-          this.fetchWordIndex(String(size), 'words.txt')
-        );
-        
-        let promiseArray = [dataInfoPromise, modelPromise, ...indexPromises];
+    buildIndices(fetchedObjects) {
+      let indices = {};
 
-        return Promise.all(promiseArray).then(result => {
-          return {
-            dataInfo: this.dataInfo,
-            model: this.model,
-            indices: this.wordsIndices
-          };
-        });
+      fetchedObjects.filter(obj => !obj.isDataInfo).forEach(wrapper => {
+        let {location, wordIndex} = wrapper.obj;
+        indices[location] = wordIndex;
+      });
+
+      return indices;
     }
 }
 

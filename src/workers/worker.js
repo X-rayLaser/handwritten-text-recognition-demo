@@ -3,7 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import { Recognizer, Preprocessor, TokenPassingDecoder, BestPathDecoder 
 } from '../recognition';
 
-import { FileLoader, defaultDictionarySize, TOKEN_PASSING_ALGORITHM 
+import { FileLoader, NewLoader, defaultDictionarySize, TOKEN_PASSING_ALGORITHM 
 } from '../util';
 
 import { tsjsModelUrl } from '../config';
@@ -42,6 +42,7 @@ function buildDictParams(dictSize) {
 
 
 const loader = new FileLoader();
+//const loader = new NewLoader();
 
 
 const chooseDecoder = decoderMetaObject => {
@@ -94,26 +95,22 @@ onmessage = function(e) {
     }
 }
 
-try {
-    loader.fetch().then(obj => {
-        let {dataInfo, tfjsModel, indices} = obj;
-        
-        wordsIndices = indices;
-        let dictParams = buildDictParams(defaultDictionarySize);
-    
-        preprocessor = new Preprocessor(dataInfo);
-        tokenPassing = new TokenPassingDecoder(dictParams);
-    
-        bestPath = new BestPathDecoder(dataInfo);
-    
-        ready = true;
-    
-        sendPostMessage('init', {});
-    });
-} catch (e) {
-    setTimeout(() => {
+loader.fetch().then(obj => {
+    let {dataInfo, indices} = obj;
+    console.log(obj);
+    wordsIndices = indices;
+    let dictParams = buildDictParams(defaultDictionarySize);
 
-        console.error('Should propagate errroor');
-        throw e;
-    }, 5000);
-}
+    preprocessor = new Preprocessor(dataInfo);
+    tokenPassing = new TokenPassingDecoder(dictParams);
+
+    bestPath = new BestPathDecoder(dataInfo);
+
+    ready = true;
+
+    sendPostMessage('init', {});
+}).catch(reason => {
+    setTimeout(() => {
+        throw new Error(reason);
+    }, 10);
+});

@@ -3,7 +3,7 @@ const hostName = "X-rayLaser.github.io";
 
 const port = 8080;
 
-const schema = "http";
+const schema = "https";
 
 //export const baseUrl = `${schema}://${hostName}:${port}`;
 export const baseUrl = `${schema}://${hostName}/handwritten-text-recognition-demo`;

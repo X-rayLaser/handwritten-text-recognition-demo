@@ -7,7 +7,7 @@ export default function About(props) {
 
             </p>
             <p></p>
-            <a href="#">A link to the Github repository used to help build the app</a>
+            <a href="https://github.com/X-rayLaser/keras-auto-hwr">A link to the Github repository used to help build the app</a>
         </div>
     );
 }

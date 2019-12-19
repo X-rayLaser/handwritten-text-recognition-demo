@@ -1,10 +1,12 @@
-const hostName = "localhost";
+//const hostName = "localhost";
+const hostName = "X-rayLaser.github.io";
 
 const port = 8080;
 
 const schema = "http";
 
-export const baseUrl = `${schema}://${hostName}:${port}`;
+//export const baseUrl = `${schema}://${hostName}:${port}`;
+export const baseUrl = `${schema}://${hostName}/handwritten-text-recognition-demo`;
 
 export const dataInfoPath = 'blstm/data_info.json';
 

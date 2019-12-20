@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
 import Canvas from './canvas';
@@ -178,8 +179,10 @@ export default class RecognitionWidget extends React.Component {
   
       return (
         <div>
-          <Button disabled={!this.state.complete} onClick={this.handleZoomIn}>Zoom in</Button>
-          <Button disabled={!this.state.complete} onClick={this.handleZoomOut}>Zoom out</Button>
+          <ButtonGroup aria-label="Zoom buttons">
+            <Button disabled={!this.state.complete} onClick={this.handleZoomIn}>Zoom in</Button>
+            <Button disabled={!this.state.complete} onClick={this.handleZoomOut}>Zoom out</Button>
+          </ButtonGroup>
           <Canvas disabled={!this.state.complete} 
                   onUpdated={this.handleUpdated}
                   scale={this.state.scale} ratio={this.ratio}
@@ -199,18 +202,17 @@ export default class RecognitionWidget extends React.Component {
 function Info(props) {
   return (
     <section>
-      <p>
-        To get a higher accuracy, try to draw a text just like you would with a pencil.
-      </p>
-      <p>By default, Token Passing algorithm is used for decoding, with 
-          dictionary containing 1000 words. You can change the size of the 
-          dictionary or switch to Best Path decoding algorithm.
-      </p>
-      <p>Note that with Token Passing algorithm only words that are in the 
-        dictionary will be recognized.
-        Also, the running time of Token Passing decoding algorithm is proportional
+      <Alert variant="success">
+        By default, token passing algorithm is used for decoding, with
+        dictionary containing 1000 words. You can change the size of the 
+        dictionary or switch to the best path decoding algorithm.
+      </Alert>
+      <Alert variant="warning">
+        Note that with Token Passing algorithm only words that are in the 
+        dictionary will be recognized. 
+        Also, the running time of Token Passing decoding algorithm is proportional 
         to the square of dictionary size.
-      </p>
+      </Alert>
     </section>
   );
 }

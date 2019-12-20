@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import TargetSurfaceGeometry from '../geometry';
 import { EventListenersStore } from '../util';
 import { DrawingBoard } from './DrawingBoard';
@@ -106,14 +107,16 @@ export default class Canvas extends React.Component {
                       onMouseUp={this.handleMouseUp} 
                       disabled={this.props.disabled}
                       clearCounter={this.state.clearCounter} />
-          <Button disabled={this.props.disabled} variant="primary" 
-                  sz="lg" onClick={this.handleClear}>
-            Clear
-          </Button>
-          <Button disabled={this.props.disabled} variant="primary" 
-                  sz="lg" onClick={this.handleRecognize}>
-            Recognize
-          </Button>
+          <ButtonGroup aria-label="Zoom buttons">
+            <Button disabled={this.props.disabled} variant="primary" 
+                    sz="lg" onClick={this.handleClear}>
+              Clear
+            </Button>
+            <Button disabled={this.props.disabled} variant="primary" 
+                    sz="lg" onClick={this.handleRecognize}>
+              Recognize
+            </Button>
+          </ButtonGroup>
         </div>
       );
     }

@@ -7,14 +7,15 @@ export default function About(props) {
                 <p>This is a demo for the On-line Handwritten Text 
                     Recognition (HTR) system.
                 </p>
+                <p>All recognition related computations are performed in the 
+                    browser, thanks to 
+                    <a href="https://www.tensorflow.org/js"> TensorFlow.js.</a>
+                </p>
             </section>
             <section>
                 <header>
                     <h4>How does it work</h4>
                 </header>
-                <p>The system's main components are the recurrent neural net, 
-                    CTC decoding algorithms.
-                </p>
                 <p>The app contains a canvas element where a user can draw/write 
                     some text. When they write something, their handwriting gets 
                     represented as an array of data points containing among 

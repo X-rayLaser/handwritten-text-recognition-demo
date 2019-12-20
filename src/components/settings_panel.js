@@ -39,7 +39,7 @@ export default class SettingsPanel extends React.Component {
       let sizeOptions = allowedDictionarySizes.map(size => (<option>{size}</option>));
 
       return (
-        <Accordion>
+        <Accordion className='app-section'>
           <Card>
             <Card.Header>
               <Accordion.Toggle as={Button} variant="link" eventKey="0">

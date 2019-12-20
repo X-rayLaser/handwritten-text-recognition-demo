@@ -74,7 +74,7 @@ export class DrawingBoard extends React.Component {
     if (this.props.disabled) {
       styleProps.background = "#999";
     }
-    return (<canvas style={styleProps} ref={this.canvasRef}></canvas>);
+    return (<canvas className='app-section' style={styleProps} ref={this.canvasRef}></canvas>);
   }
 }
 

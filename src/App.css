@@ -26,5 +26,8 @@ canvas {
   border: #000 1px solid;
   box-sizing: border-box;
   border-radius: 10px;
+}
+
+.app-section {
   margin: 20px 0px;
 }

@@ -208,7 +208,7 @@ function Info(props) {
         dictionary or switch to the best path decoding algorithm.
       </Alert>
       <Alert variant="warning">
-        Note that with Token Passing algorithm only words that are in the 
+        Note that when using the token passing algorithm, only words that are in the 
         dictionary will be recognized. 
         Also, the running time of Token Passing decoding algorithm is proportional 
         to the square of dictionary size.
